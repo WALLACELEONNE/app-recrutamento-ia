@@ -1,0 +1,37 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+*.out
+
+# Coverage
+coverage.out
+
+# IDE and Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+# Docker and Build
+docker-compose.override.yml
+tmp/
+
+# LiveKit local storage
+redis_data/
+postgres_data/
+
+# OS specific
+.DS_Store
+Thumbs.db

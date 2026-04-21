@@ -1,0 +1,108 @@
+version: '3.8'
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: app_postgres
+    env_file:
+      - .env.development
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      app-network:
+        aliases:
+          - db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-admin} -d $${POSTGRES_DB:-recrutamento_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: app_redis
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      app-network:
+        aliases:
+          - cache
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: app_livekit
+    command: --config /etc/livekit.yaml
+    ports:
+      - "127.0.0.1:7880:7880"
+      - "127.0.0.1:7881:7881"
+      - "127.0.0.1:7882:7882/udp"
+      - "127.0.0.1:8080:8080"
+    env_file:
+      - .env.development
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml
+    networks:
+      - app-network
+    restart: unless-stopped
+    # Healthcheck para Livekit (porta HTTP 8080)
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: app_server
+    ports:
+      - "127.0.0.1:3000:3000"
+    env_file:
+      - .env.development
+    networks:
+      - app-network
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: app_worker
+    env_file:
+      - .env.development
+    networks:
+      - app-network
+    restart: unless-stopped
+    depends_on:
+      livekit:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy

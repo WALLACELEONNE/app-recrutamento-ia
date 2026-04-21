@@ -1,0 +1,17 @@
+.git
+.gitignore
+.env
+.env.*
+node_modules/
+vendor/
+bin/
+*.exe
+*.log
+README.md
+DEPLOY.md
+ARCHITECTURE.md
+PLANO_IMPLEMENTACAO.md
+docker-compose.yml
+Dockerfile.*
+.github/
+.vscode/

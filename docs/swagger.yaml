@@ -1,0 +1,107 @@
+basePath: /api/v1
+definitions:
+  domain.InterviewSession:
+    properties:
+      audio_s3_key:
+        type: string
+      candidate_id:
+        type: string
+      duration_s:
+        type: integer
+      ended_at:
+        type: string
+      id:
+        type: string
+      job_id:
+        type: string
+      started_at:
+        type: string
+      status:
+        $ref: '#/definitions/domain.SessionStatus'
+      transcript_s3_key:
+        type: string
+    type: object
+  domain.SessionStatus:
+    enum:
+    - invited
+    - in_progress
+    - done
+    type: string
+    x-enum-varnames:
+    - SessionStatusInvited
+    - SessionStatusInProgress
+    - SessionStatusDone
+host: localhost:3000
+info:
+  contact: {}
+  description: Plataforma SaaS de entrevistas por voz com IA
+  title: App Recrutamento IA - API
+  version: "1.0"
+paths:
+  /api/v1/sessions/{id}:
+    get:
+      description: Retrieves metadata about an interview session
+      parameters:
+      - description: Session UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.InterviewSession'
+        "400":
+          description: '{"error": "invalid session id"}'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: '{"error": "session not found"}'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Gets interview session details
+      tags:
+      - session
+  /api/v1/sessions/{id}/start:
+    post:
+      consumes:
+      - application/json
+      description: Changes the status of an interview session to in_progress
+      parameters:
+      - description: Session UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"message": "session started"}'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: '{"error": "invalid session id"}'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: '{"error": "internal server error"}'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Starts an interview session
+      tags:
+      - session
+swagger: "2.0"
