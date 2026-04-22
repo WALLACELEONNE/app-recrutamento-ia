@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 // Substitua pela URL gerada do Railway
-const BASE_URL = 'https://server-production-73243.up.railway.app';
+const BASE_URL = 'https://app-recrutamento-ia-production.up.railway.app';
 
 test.describe('Testes E2E - Recrutamento IA', () => {
 
