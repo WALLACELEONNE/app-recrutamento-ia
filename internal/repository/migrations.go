@@ -41,13 +41,13 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool) error {
 // SeedAdmin creates a default admin user if no users exist in the database
 func SeedAdmin(ctx context.Context, pool *pgxpool.Pool) error {
 	var count int
-	err := pool.QueryRow(ctx, "SELECT COUNT(*) FROM users").Scan(&count)
+	err := pool.QueryRow(ctx, "SELECT COUNT(*) FROM users WHERE email = $1", "admin@acme.com").Scan(&count)
 	if err != nil {
 		return fmt.Errorf("failed to check users count: %w", err)
 	}
 
 	if count > 0 {
-		logger.Info("Users table already populated, skipping admin seeding")
+		logger.Info("Admin user already exists, skipping admin seeding")
 		return nil
 	}
 
@@ -64,7 +64,7 @@ func SeedAdmin(ctx context.Context, pool *pgxpool.Pool) error {
 	id := uuid.New()
 	now := time.Now()
 
-	_, err = pool.Exec(ctx, 
+	_, err = pool.Exec(ctx,
 		`INSERT INTO users (id, name, email, password_hash, role, created_at, updated_at) 
 		 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
 		id, "Admin Default", adminEmail, string(bytes), "admin", now, now,
