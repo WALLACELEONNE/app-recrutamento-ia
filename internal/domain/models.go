@@ -140,6 +140,8 @@ type SessionRepository interface {
 	GetDashboardMetrics(ctx context.Context) (DashboardMetrics, error)
 	GetRecentInterviews(ctx context.Context, limit int) ([]RecentInterview, error)
 	GetJobs(ctx context.Context) ([]Job, error)
+	GetJobByID(ctx context.Context, id uuid.UUID) (*Job, error)
+	GetInterviewsByJobID(ctx context.Context, jobID uuid.UUID) ([]RecentInterview, error)
 	CreateJob(ctx context.Context, job *Job) error
 	CreateCandidate(ctx context.Context, candidate *Candidate) error
 	GetSessionReport(ctx context.Context, sessionID uuid.UUID) (ReportData, error)

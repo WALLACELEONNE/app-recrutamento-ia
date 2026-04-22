@@ -2,13 +2,14 @@ package pages
 
 import "github.com/username/app-recrutamento-ia/templates/layouts"
 
-templ InterviewRoom(sessionID string, token string) {
+templ InterviewRoom(sessionID string, token string, livekitURL string) {
 	@layouts.CandidateLayout("Sala de Entrevista") {
 		<!-- Alpine Component Wrapper -->
 		<div class="w-full max-w-lg mx-auto flex flex-col items-center justify-center space-y-12"
 			 x-data="interviewPlayer"
 			 data-session-id={ sessionID }
-			 data-token={ token }>
+			 data-token={ token }
+			 data-url={ livekitURL }>
 			
 			<!-- Header / Status Indicator -->
 			<div class="text-center space-y-2">

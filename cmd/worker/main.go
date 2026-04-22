@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"os"
 	"os/signal"
@@ -14,6 +15,7 @@ import (
 	"github.com/username/app-recrutamento-ia/internal/infrastructure/deepgram"
 	"github.com/username/app-recrutamento-ia/internal/infrastructure/elevenlabs"
 	"github.com/username/app-recrutamento-ia/internal/infrastructure/openai"
+	"github.com/username/app-recrutamento-ia/internal/infrastructure/queue"
 	zlog "github.com/username/app-recrutamento-ia/internal/logger"
 	"github.com/username/app-recrutamento-ia/internal/services"
 	"go.uber.org/zap"
@@ -47,50 +49,72 @@ func main() {
 		zlog.Fatal("Failed to init TTS")
 	}
 
-	// Orquestrador da Entrevista
-	orchestrator := services.NewInterviewOrchestrator(sttClient, llmClient, ttsClient)
+	redisURL := getEnvOrDefault("REDIS_URL", "127.0.0.1:6379")
+	redisQueue, err := queue.NewRedisQueue(redisURL, "interview_jobs")
+	if err != nil {
+		zlog.Fatal("Failed to connect to Redis", zap.Error(err))
+	}
+	defer redisQueue.Close()
 
-	log.Printf("Conectando ao LiveKit Server: %s", hostURL)
+	log.Printf("Worker iniciado e aguardando entrevistas via Redis (%s)", redisURL)
 
-	roomName := "interview-test"
-	room, err := lksdk.ConnectToRoom(hostURL, lksdk.ConnectInfo{
-		APIKey:              apiKey,
-		APISecret:           apiSecret,
-		RoomName:            roomName,
-		ParticipantIdentity: "ai-worker",
-	}, &lksdk.RoomCallback{
-		ParticipantCallback: lksdk.ParticipantCallback{
-			OnTrackSubscribed: func(track *webrtc.TrackRemote, pub *lksdk.RemoteTrackPublication, rp *lksdk.RemoteParticipant) {
-				zlog.Info("Track Subscribed", zap.String("track_id", track.ID()))
-				if track.Kind() == webrtc.RTPCodecTypeAudio {
-					go orchestrator.HandleCandidateAudio(context.Background(), track, rp)
-				}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go redisQueue.Listen(ctx, func(ctx context.Context, jobData []byte) error {
+		var job map[string]string
+		if err := json.Unmarshal(jobData, &job); err != nil {
+			return err
+		}
+
+		roomName := job["room_name"]
+		if roomName == "" {
+			return nil
+		}
+
+		zlog.Info("Iniciando AI Worker para a sala", zap.String("room_name", roomName))
+
+		orchestrator := services.NewInterviewOrchestrator(sttClient, llmClient, ttsClient)
+
+		room, err := lksdk.ConnectToRoom(hostURL, lksdk.ConnectInfo{
+			APIKey:              apiKey,
+			APISecret:           apiSecret,
+			RoomName:            roomName,
+			ParticipantIdentity: "ai-worker",
+		}, &lksdk.RoomCallback{
+			ParticipantCallback: lksdk.ParticipantCallback{
+				OnTrackSubscribed: func(track *webrtc.TrackRemote, pub *lksdk.RemoteTrackPublication, rp *lksdk.RemoteParticipant) {
+					zlog.Info("Track Subscribed", zap.String("track_id", track.ID()))
+					if track.Kind() == webrtc.RTPCodecTypeAudio {
+						go orchestrator.HandleCandidateAudio(context.Background(), track, rp)
+					}
+				},
 			},
-		},
-		OnParticipantConnected: func(p *lksdk.RemoteParticipant) {
-			log.Printf("Participante conectado: %s", p.Identity())
-		},
+			OnParticipantConnected: func(p *lksdk.RemoteParticipant) {
+				log.Printf("Participante conectado na sala %s: %s", roomName, p.Identity())
+			},
+		})
+
+		if err != nil {
+			zlog.Error("Falha ao conectar ao LiveKit", zap.Error(err))
+			return err
+		}
+
+		err = orchestrator.SetupAITrack(room)
+		if err != nil {
+			zlog.Error("Failed to setup AI audio track", zap.Error(err))
+			room.Disconnect()
+			return err
+		}
+
+		log.Printf("Conectado à sala %s com sucesso!", room.Name())
+		return nil
 	})
-
-	if err != nil {
-		zlog.Error("Falha ao conectar ao LiveKit", zap.Error(err))
-		os.Exit(1)
-	}
-
-	// Prepara a trilha de áudio da IA para falar
-	err = orchestrator.SetupAITrack(room)
-	if err != nil {
-		zlog.Fatal("Failed to setup AI audio track")
-	}
-
-	log.Printf("Conectado à sala %s com sucesso!", room.Name())
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigChan
 
-	log.Println("Desconectando do LiveKit...")
-	room.Disconnect()
 	log.Println("Worker encerrado.")
 }
 

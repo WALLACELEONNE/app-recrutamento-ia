@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -67,6 +68,34 @@ func (h *FrontendHandler) ServeVagasPage(w http.ResponseWriter, r *http.Request)
 	}
 
 	component := pages.VagasHome(jobs)
+	err = component.Render(r.Context(), w)
+	if err != nil {
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+	}
+}
+
+// ServeJobDetailsPage renders the specific job page
+func (h *FrontendHandler) ServeJobDetailsPage(w http.ResponseWriter, r *http.Request) {
+	jobIDStr := chi.URLParam(r, "id")
+	jobID, err := uuid.Parse(jobIDStr)
+	if err != nil {
+		http.Error(w, "Invalid job ID", http.StatusBadRequest)
+		return
+	}
+
+	job, err := h.sessionRepo.GetJobByID(r.Context(), jobID)
+	if err != nil {
+		http.Error(w, "Failed to load job", http.StatusInternalServerError)
+		return
+	}
+
+	interviews, err := h.sessionRepo.GetInterviewsByJobID(r.Context(), jobID)
+	if err != nil {
+		interviews = []domain.RecentInterview{}
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	component := pages.VagaDetails(*job, interviews)
 	err = component.Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
@@ -222,10 +251,27 @@ func (h *FrontendHandler) ServeInterviewPage(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	livekitURL := os.Getenv("LIVEKIT_URL")
+	if livekitURL == "" {
+		livekitURL = "ws://127.0.0.1:7880"
+	}
+
+	// Trigger the AI Worker to join this room via Redis
+	redisURL := os.Getenv("REDIS_URL")
+	if redisURL == "" {
+		redisURL = "127.0.0.1:6379"
+	}
+	redisQ, err := queue.NewRedisQueue(redisURL, "interview_jobs")
+	if err == nil {
+		defer redisQ.Close()
+		jobData := map[string]string{"room_name": "room-" + sessionID}
+		_ = redisQ.Enqueue(r.Context(), jobData)
+	}
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	// Render the Templ component
-	component := pages.InterviewRoom(sessionID, token)
+	component := pages.InterviewRoom(sessionID, token, livekitURL)
 	err = component.Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)

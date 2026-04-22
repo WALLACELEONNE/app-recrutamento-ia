@@ -174,6 +174,57 @@ func (r *pgSessionRepository) GetJobs(ctx context.Context) ([]domain.Job, error)
 	return jobs, nil
 }
 
+// GetInterviewsByJobID retrieves all interviews for a specific job
+func (r *pgSessionRepository) GetInterviewsByJobID(ctx context.Context, jobID uuid.UUID) ([]domain.RecentInterview, error) {
+	query := `
+		SELECT s.id, c.name, j.title, s.status, s.score
+		FROM interview_sessions s
+		JOIN candidates c ON s.candidate_id = c.id
+		JOIN jobs j ON s.job_id = j.id
+		WHERE s.job_id = $1
+		ORDER BY s.started_at DESC NULLS LAST
+	`
+	rows, err := r.db.Pool.Query(ctx, query, jobID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query interviews by job: %w", err)
+	}
+	defer rows.Close()
+
+	var interviews []domain.RecentInterview
+	for rows.Next() {
+		var interview domain.RecentInterview
+		var score *string
+		if err := rows.Scan(&interview.SessionID, &interview.CandidateName, &interview.JobTitle, &interview.Status, &score); err != nil {
+			return nil, fmt.Errorf("failed to scan interview row: %w", err)
+		}
+		if score != nil {
+			interview.Score = *score
+		} else {
+			interview.Score = "-"
+		}
+		interviews = append(interviews, interview)
+	}
+
+	return interviews, nil
+}
+
+// GetJobByID retrieves a specific job.
+func (r *pgSessionRepository) GetJobByID(ctx context.Context, id uuid.UUID) (*domain.Job, error) {
+	query := `SELECT id, title, department, interview_config, created_at FROM jobs WHERE id = $1`
+	var job domain.Job
+	var configBytes []byte
+	
+	err := r.db.Pool.QueryRow(ctx, query, id).Scan(&job.ID, &job.Title, &job.Department, &configBytes, &job.CreatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query job by id: %w", err)
+	}
+	
+	if len(configBytes) > 0 {
+		_ = json.Unmarshal(configBytes, &job.InterviewConfig)
+	}
+	return &job, nil
+}
+
 // CreateJob creates a new job.
 func (r *pgSessionRepository) CreateJob(ctx context.Context, job *domain.Job) error {
 	configBytes, _ := json.Marshal(job.InterviewConfig)

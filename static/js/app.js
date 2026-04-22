@@ -63,16 +63,18 @@ document.addEventListener('alpine:init', () => {
                     }
                 });
 
-                // Read token from DOM element attribute
+                // Read token and url from DOM element attribute
                 const rootEl = document.querySelector('[data-token]');
                 const token = rootEl ? rootEl.getAttribute('data-token') : '';
+                const wsUrl = rootEl ? rootEl.getAttribute('data-url') : '';
                 
                 if (!token) {
                     throw new Error("Token não encontrado");
                 }
                 
-                // Em ambiente de produção real, você usaria o URL correto do seu LiveKit server
-                const wsUrl = window.location.hostname.includes('127.0.0.1') ? "ws://127.0.0.1:7880" : "wss://seu-livekit-server.com";
+                if (!wsUrl) {
+                    throw new Error("URL do servidor não encontrada");
+                }
                 
                 console.log("Token received, connecting to LiveKit at:", wsUrl);
                 

@@ -50,7 +50,7 @@ templ VagasHome(jobs []domain.Job) {
 								</div>
 							</div>
 							<div class="min-w-0 flex-1">
-								<a href="#" class="focus:outline-none">
+								<a href={ templ.SafeURL("/dashboard/vagas/" + job.ID.String()) } class="focus:outline-none">
 									<span class="absolute inset-0" aria-hidden="true"></span>
 									<p class="text-sm font-medium text-slate-900 dark:text-white">{ job.Title }</p>
 									<p class="truncate text-sm text-slate-500 dark:text-slate-400">{ job.Department }</p>
