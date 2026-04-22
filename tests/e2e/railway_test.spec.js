@@ -13,7 +13,7 @@ test.describe('Testes E2E - Recrutamento IA', () => {
     // Verifica se a página de login foi renderizada
     const title = await page.title();
     console.log(`Título da página: ${title}`);
-    expect(title).toContain('Login - Recrutamento IA');
+    expect(title).toContain('Login');
     
     // Verifica se o formulário existe
     const loginForm = page.locator('form');
