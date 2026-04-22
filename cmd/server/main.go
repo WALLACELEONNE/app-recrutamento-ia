@@ -38,6 +38,14 @@ func main() {
 	}
 	defer db.Close()
 
+	// Execute Automigrations and Seed
+	if err := repository.Migrate(context.Background(), db.Pool); err != nil {
+		logger.Fatal("Database migration failed", zap.Error(err))
+	}
+	if err := repository.SeedAdmin(context.Background(), db.Pool); err != nil {
+		logger.Fatal("Admin seeding failed", zap.Error(err))
+	}
+
 	sessionRepo := repository.NewSessionRepository(db)
 	sessionUC := usecase.NewSessionUseCase(sessionRepo)
 	sessionHandler := handlers.NewSessionHandler(sessionUC)

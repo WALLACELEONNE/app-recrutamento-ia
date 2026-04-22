@@ -57,6 +57,10 @@ func main() {
 	}
 	defer db.Close()
 
+	if err := repository.Migrate(context.Background(), db.Pool); err != nil {
+		zlog.Fatal("Database migration failed", zap.Error(err))
+	}
+
 	// OpenAI Client
 	_, err = openai.NewLLMClient(getEnvOrDefault("OPENAI_API_KEY", "dummy"))
 	if err != nil {
@@ -81,17 +85,17 @@ func main() {
 		}
 
 		zlog.Info("Processando análise de sessão", zap.String("session_id", job.SessionID))
-		
+
 		// Simulação de tempo de processamento assíncrono (LLM prompt etc)
 		time.Sleep(2 * time.Second)
-		
+
 		// O processo de análise real envolveria:
 		// 1. Buscar `session_turns` no Postgres
 		// 2. Montar texto completo da entrevista
 		// 3. Enviar prompt para LLMClient
 		// 4. Receber score, skills (JSONB)
 		// 5. Atualizar tabela `interview_sessions` com Status='done' e Score final.
-		
+
 		zlog.Info("Análise concluída com sucesso", zap.String("session_id", job.SessionID))
 		return nil
 	})
@@ -108,7 +112,7 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("Worker OK"))
 	})
-	
+
 	// Observabilidade
 	router.Get("/metrics", promhttp.Handler().ServeHTTP)
 
@@ -119,7 +123,7 @@ func main() {
 			http.Error(w, "Invalid payload", http.StatusBadRequest)
 			return
 		}
-		
+
 		if payload.SessionID == "" {
 			http.Error(w, "session_id is required", http.StatusBadRequest)
 			return

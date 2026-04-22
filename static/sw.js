@@ -4,8 +4,8 @@ const ASSETS_TO_CACHE = [
   '/manifest.json',
   '/static/css/styles.css',
   '/static/js/app.js',
-  '/static/js/alpine.min.js',
-  '/static/js/livekit-client.min.js',
+  'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js',
+  'https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.js',
   '/static/img/icon-192x192.png',
   '/static/img/icon-512x512.png',
   // Offline fallback page if needed
