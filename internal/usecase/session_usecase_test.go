@@ -36,6 +36,36 @@ func (m *MockSessionRepository) UpdateStatus(ctx context.Context, id uuid.UUID, 
 	return args.Error(0)
 }
 
+func (m *MockSessionRepository) GetDashboardMetrics(ctx context.Context) (domain.DashboardMetrics, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(domain.DashboardMetrics), args.Error(1)
+}
+
+func (m *MockSessionRepository) GetRecentInterviews(ctx context.Context, limit int) ([]domain.RecentInterview, error) {
+	args := m.Called(ctx, limit)
+	return args.Get(0).([]domain.RecentInterview), args.Error(1)
+}
+
+func (m *MockSessionRepository) GetJobs(ctx context.Context) ([]domain.Job, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]domain.Job), args.Error(1)
+}
+
+func (m *MockSessionRepository) CreateJob(ctx context.Context, job *domain.Job) error {
+	args := m.Called(ctx, job)
+	return args.Error(0)
+}
+
+func (m *MockSessionRepository) CreateCandidate(ctx context.Context, candidate *domain.Candidate) error {
+	args := m.Called(ctx, candidate)
+	return args.Error(0)
+}
+
+func (m *MockSessionRepository) GetSessionReport(ctx context.Context, sessionID uuid.UUID) (domain.ReportData, error) {
+	args := m.Called(ctx, sessionID)
+	return args.Get(0).(domain.ReportData), args.Error(1)
+}
+
 func TestStartSession_InvalidID(t *testing.T) {
 	mockRepo := new(MockSessionRepository)
 	uc := usecase.NewSessionUseCase(mockRepo)
