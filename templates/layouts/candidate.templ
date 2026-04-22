@@ -35,14 +35,50 @@ templ CandidateLayout(title string) {
 				}
 			</script>
 
+			<!-- Theme Initialization (evitar FOUC) -->
+			<script>
+				if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+					document.documentElement.classList.add('dark');
+				} else {
+					document.documentElement.classList.remove('dark')
+				}
+				
+				document.addEventListener('alpine:init', () => {
+					Alpine.store('theme', {
+						mode: localStorage.getItem('color-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
+						toggle() {
+							this.mode = this.mode === 'dark' ? 'light' : 'dark';
+							localStorage.setItem('color-theme', this.mode);
+							if (this.mode === 'dark') {
+								document.documentElement.classList.add('dark');
+							} else {
+								document.documentElement.classList.remove('dark');
+							}
+						}
+					});
+				});
+			</script>
+
 			<!-- Alpine.js (Interatividade) -->
 			<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 			<!-- LiveKit Client SDK -->
 			<script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.js"></script>
 		</head>
 		<!-- Background Dark Mode for Candidates -->
-		<body class="bg-slate-900 text-slate-50 min-h-screen flex flex-col font-sans selection:bg-indigo-500 selection:text-white" x-data="interviewPlayer()">
+		<body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-50 min-h-screen flex flex-col font-sans selection:bg-indigo-500 selection:text-white transition-colors duration-200" x-data="interviewPlayer()">
 			
+			<!-- Theme Toggle (Candidate Header) -->
+			<div class="absolute top-4 right-4 z-50">
+				<button @click="$store.theme.toggle()" type="button" class="p-2 rounded-full bg-white/10 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 backdrop-blur-md transition-colors" aria-label="Alternar tema claro/escuro">
+					<svg x-show="$store.theme.mode === 'light'" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+					</svg>
+					<svg x-show="$store.theme.mode === 'dark'" x-cloak class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+					</svg>
+				</button>
+			</div>
+
 			<!-- Accessible Live Region for Screen Readers -->
 			<div class="sr-only" aria-live="polite" x-text="aiStatusText"></div>
 
