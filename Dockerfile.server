@@ -36,6 +36,7 @@ RUN apk --no-cache add ca-certificates tzdata
 ENV TZ=America/Sao_Paulo
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
+ENV PORT=3000
 
 # Copia o binário do Server
 COPY --from=builder /app/server .
@@ -48,10 +49,11 @@ COPY --from=builder /app/docs ./docs
 
 # A porta que o server Go escutará
 EXPOSE 3000
+EXPOSE 9090
 
 # Healthcheck para garantir que o server iniciou
 HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:${PORT:-3000}/health || exit 1
 
 # Comando de inicialização
 CMD ["./server"]
