@@ -9,7 +9,7 @@ import (
 
 func TestNewRedisQueue_ConnectionError(t *testing.T) {
 	// Tenta conectar num Redis inexistente
-	q, err := queue.NewRedisQueue("127.0.0.1:9999", "", "test_queue")
+	q, err := queue.NewRedisQueue("127.0.0.1:9999", "test_queue")
 
 	assert.Error(t, err)
 	assert.Nil(t, q)

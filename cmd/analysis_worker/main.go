@@ -48,7 +48,7 @@ func main() {
 
 	port := getEnvOrDefault("WORKER_PORT", "4000")
 	dbURL := getEnvOrDefault("DATABASE_URL", "postgres://admin:password@127.0.0.1:5432/recrutamento_db?sslmode=disable")
-	redisAddr := getEnvOrDefault("REDIS_ADDR", "127.0.0.1:6379")
+	redisURL := getEnvOrDefault("REDIS_URL", "127.0.0.1:6379")
 
 	// Dependências (Database)
 	db, err := repository.NewDB(context.Background(), dbURL)
@@ -68,7 +68,7 @@ func main() {
 	}
 
 	// Queue (Redis)
-	redisQueue, err := queue.NewRedisQueue(redisAddr, "", "analysis_jobs")
+	redisQueue, err := queue.NewRedisQueue(redisURL, "analysis_jobs")
 	if err != nil {
 		zlog.Fatal("Failed to connect to Redis", zap.Error(err))
 	}

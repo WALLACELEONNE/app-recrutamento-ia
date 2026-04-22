@@ -17,12 +17,17 @@ type RedisQueue struct {
 }
 
 // NewRedisQueue inicializa a conexão com o Redis e retorna a fila.
-func NewRedisQueue(addr, password, queueName string) (*RedisQueue, error) {
-	client := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: password,
-		DB:       0,
-	})
+func NewRedisQueue(redisURL, queueName string) (*RedisQueue, error) {
+	opts, err := redis.ParseURL(redisURL)
+	if err != nil {
+		// Fallback para caso seja apenas host:port
+		opts = &redis.Options{
+			Addr: redisURL,
+			DB:   0,
+		}
+	}
+
+	client := redis.NewClient(opts)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
