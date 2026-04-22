@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/username/app-recrutamento-ia/internal/usecase"
 	"github.com/username/app-recrutamento-ia/internal/logger"
+	"github.com/username/app-recrutamento-ia/internal/usecase"
 	"go.uber.org/zap"
 )
 

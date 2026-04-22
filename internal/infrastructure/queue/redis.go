@@ -85,12 +85,12 @@ func (rq *RedisQueue) Listen(ctx context.Context, handler func(context.Context, 
 
 			if len(result) == 2 {
 				jobData := []byte(result[1])
-				
+
 				// Processa o job de forma bloqueante neste worker (pode ser go handler() para concorrencia)
 				err := handler(ctx, jobData)
 				if err != nil {
 					logger.Error("Job processing failed", zap.Error(err))
-					// Em um sistema real como RabbitMQ, faríamos NACK. 
+					// Em um sistema real como RabbitMQ, faríamos NACK.
 					// Aqui poderíamos enviar para uma Dead Letter Queue (DLQ).
 				}
 			}

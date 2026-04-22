@@ -25,7 +25,31 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool) error {
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 		);`,
-		// We can add other tables here later (candidates, interviews)
+		`CREATE TABLE IF NOT EXISTS jobs (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			title VARCHAR(255) NOT NULL,
+			department VARCHAR(255) NOT NULL,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+		);`,
+		`CREATE TABLE IF NOT EXISTS candidates (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			name VARCHAR(255) NOT NULL,
+			email VARCHAR(255) UNIQUE NOT NULL,
+			job_id UUID REFERENCES jobs(id),
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+		);`,
+		`CREATE TABLE IF NOT EXISTS interview_sessions (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			candidate_id UUID REFERENCES candidates(id),
+			job_id UUID REFERENCES jobs(id),
+			status VARCHAR(50) NOT NULL,
+			score VARCHAR(50),
+			started_at TIMESTAMP WITH TIME ZONE,
+			ended_at TIMESTAMP WITH TIME ZONE,
+			duration_s INT,
+			audio_s3_key TEXT,
+			transcript_s3_key TEXT
+		);`,
 	}
 
 	for _, query := range queries {

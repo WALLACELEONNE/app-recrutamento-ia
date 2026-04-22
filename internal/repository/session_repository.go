@@ -89,3 +89,92 @@ func (r *pgSessionRepository) UpdateStatus(ctx context.Context, id uuid.UUID, st
 
 	return nil
 }
+
+// GetDashboardMetrics retrieves the metrics for the HR dashboard.
+func (r *pgSessionRepository) GetDashboardMetrics(ctx context.Context) (domain.DashboardMetrics, error) {
+	var metrics domain.DashboardMetrics
+
+	// Count total candidates
+	err := r.db.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM candidates`).Scan(&metrics.TotalCandidates)
+	if err != nil {
+		return metrics, fmt.Errorf("failed to count candidates: %w", err)
+	}
+
+	// Count active sessions
+	err = r.db.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM interview_sessions WHERE status = $1`, domain.SessionStatusInProgress).Scan(&metrics.ActiveSessions)
+	if err != nil {
+		return metrics, fmt.Errorf("failed to count active sessions: %w", err)
+	}
+
+	// Count done sessions
+	err = r.db.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM interview_sessions WHERE status = $1`, domain.SessionStatusDone).Scan(&metrics.DoneSessions)
+	if err != nil {
+		return metrics, fmt.Errorf("failed to count done sessions: %w", err)
+	}
+
+	return metrics, nil
+}
+
+// GetRecentInterviews retrieves a list of recent interviews.
+func (r *pgSessionRepository) GetRecentInterviews(ctx context.Context, limit int) ([]domain.RecentInterview, error) {
+	query := `
+		SELECT c.name, j.title, s.status, s.score
+		FROM interview_sessions s
+		JOIN candidates c ON s.candidate_id = c.id
+		JOIN jobs j ON s.job_id = j.id
+		ORDER BY s.started_at DESC NULLS LAST
+		LIMIT $1
+	`
+	rows, err := r.db.Pool.Query(ctx, query, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query recent interviews: %w", err)
+	}
+	defer rows.Close()
+
+	var interviews []domain.RecentInterview
+	for rows.Next() {
+		var interview domain.RecentInterview
+		var score *string
+		if err := rows.Scan(&interview.CandidateName, &interview.JobTitle, &interview.Status, &score); err != nil {
+			return nil, fmt.Errorf("failed to scan interview row: %w", err)
+		}
+		if score != nil {
+			interview.Score = *score
+		} else {
+			interview.Score = "-"
+		}
+		interviews = append(interviews, interview)
+	}
+
+	return interviews, nil
+}
+
+// GetJobs retrieves all jobs.
+func (r *pgSessionRepository) GetJobs(ctx context.Context) ([]domain.Job, error) {
+	query := `SELECT id, title, department, created_at FROM jobs ORDER BY created_at DESC`
+	rows, err := r.db.Pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query jobs: %w", err)
+	}
+	defer rows.Close()
+
+	var jobs []domain.Job
+	for rows.Next() {
+		var job domain.Job
+		if err := rows.Scan(&job.ID, &job.Title, &job.Department, &job.CreatedAt); err != nil {
+			return nil, fmt.Errorf("failed to scan job: %w", err)
+		}
+		jobs = append(jobs, job)
+	}
+	return jobs, nil
+}
+
+// CreateJob creates a new job.
+func (r *pgSessionRepository) CreateJob(ctx context.Context, job *domain.Job) error {
+	query := `INSERT INTO jobs (id, title, department, created_at) VALUES ($1, $2, $3, $4)`
+	_, err := r.db.Pool.Exec(ctx, query, job.ID, job.Title, job.Department, job.CreatedAt)
+	if err != nil {
+		return fmt.Errorf("failed to insert job: %w", err)
+	}
+	return nil
+}

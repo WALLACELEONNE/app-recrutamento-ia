@@ -41,7 +41,7 @@ type LoginRequest struct {
 // HandleLogin processes a login attempt and sets the JWT in an HttpOnly cookie.
 func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
-	
+
 	// Handles both JSON and Form submission
 	if r.Header.Get("Content-Type") == "application/json" {
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -69,7 +69,7 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	isSecure := r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https"
-	
+
 	// Set HttpOnly Cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:     "jwt_token",
@@ -97,6 +97,6 @@ func (h *AuthHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Secure:   false,
 	})
-	
+
 	http.Redirect(w, r, "/login", http.StatusFound)
 }

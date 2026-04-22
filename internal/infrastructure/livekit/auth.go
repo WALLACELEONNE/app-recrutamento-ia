@@ -25,13 +25,13 @@ func GenerateCandidateToken(roomName, candidateID, candidateName string) (string
 
 	// Create a new AccessToken
 	at := auth.NewAccessToken(apiKey, apiSecret)
-	
+
 	// Set identity and name
 	grant := &auth.VideoGrant{
 		RoomJoin: true,
 		Room:     roomName,
 	}
-	
+
 	// Apply the grant
 	at.AddGrant(grant).
 		SetIdentity(candidateID).

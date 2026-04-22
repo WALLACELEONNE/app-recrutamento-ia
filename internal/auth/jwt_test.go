@@ -31,7 +31,7 @@ func TestGenerateAndValidateToken(t *testing.T) {
 	assert.Equal(t, "nova-voice-auth", claims.Issuer)
 
 	// Test Expired Token logic (manual creation)
-	// We can't easily manipulate time.Now() without a mock clock, 
+	// We can't easily manipulate time.Now() without a mock clock,
 	// so we'll create an expired token manually to test validation failure.
 	expiredClaims := &auth.Claims{
 		UserID:         userID,
@@ -43,11 +43,11 @@ func TestGenerateAndValidateToken(t *testing.T) {
 			Issuer:    "nova-voice-auth",
 		},
 	}
-	
+
 	// This uses the same secret as auth.go, we know the default is "super-secret-key-for-local-dev-only"
 	expiredToken := jwt.NewWithClaims(jwt.SigningMethodHS256, expiredClaims)
 	expiredTokenString, _ := expiredToken.SignedString([]byte("super-secret-key-for-local-dev-only"))
-	
+
 	_, err = auth.ValidateToken(expiredTokenString)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid token")

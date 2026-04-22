@@ -36,7 +36,7 @@ func SecurityHeaders(next http.Handler) http.Handler {
 		w.Header().Set("X-XSS-Protection", "1; mode=block")
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
-		
+
 		// Relaxed CSP to allow Google Fonts, Tailwind, AlpineJS, LiveKit etc.
 		csp := "default-src 'self'; " +
 			"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; " +

@@ -2,38 +2,48 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/username/app-recrutamento-ia/internal/domain"
 	"github.com/username/app-recrutamento-ia/internal/infrastructure/livekit"
 	"github.com/username/app-recrutamento-ia/templates/pages"
 )
 
-type FrontendHandler struct{}
+type FrontendHandler struct {
+	sessionRepo domain.SessionRepository
+}
 
-func NewFrontendHandler() *FrontendHandler {
-	return &FrontendHandler{}
+func NewFrontendHandler(sessionRepo domain.SessionRepository) *FrontendHandler {
+	return &FrontendHandler{
+		sessionRepo: sessionRepo,
+	}
 }
 
 // ServeDashboardPage renders the main dashboard for HR
 func (h *FrontendHandler) ServeDashboardPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	// TODO: Fetch real metrics from the database
+	ctx := r.Context()
+
+	metrics, err := h.sessionRepo.GetDashboardMetrics(ctx)
+	if err != nil {
+		metrics = domain.DashboardMetrics{} // fallback or handle error
+	}
+
+	interviews, err := h.sessionRepo.GetRecentInterviews(ctx, 10)
+	if err != nil {
+		interviews = []domain.RecentInterview{} // fallback or handle error
+	}
+
 	data := domain.DashboardData{
-		Metrics: domain.DashboardMetrics{
-			TotalCandidates: 120,
-			ActiveSessions:  2,
-			DoneSessions:    118,
-		},
-		RecentInterviews: []domain.RecentInterview{
-			{CandidateName: "João Silva", JobTitle: "Desenvolvedor Go", Status: domain.SessionStatusDone, Score: "8.5/10"},
-			{CandidateName: "Maria Oliveira", JobTitle: "Engenheira de Dados", Status: domain.SessionStatusInProgress, Score: "-"},
-		},
+		Metrics:          metrics,
+		RecentInterviews: interviews,
 	}
 
 	component := pages.DashboardHome(data)
-	err := component.Render(r.Context(), w)
+	err = component.Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 	}
@@ -43,12 +53,48 @@ func (h *FrontendHandler) ServeDashboardPage(w http.ResponseWriter, r *http.Requ
 func (h *FrontendHandler) ServeVagasPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	// Placeholder data for design
-	component := pages.VagasHome()
-	err := component.Render(r.Context(), w)
+	jobs, err := h.sessionRepo.GetJobs(r.Context())
+	if err != nil {
+		jobs = []domain.Job{}
+	}
+
+	component := pages.VagasHome(jobs)
+	err = component.Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 	}
+}
+
+// HandleCreateVaga creates a new job from the form
+func (h *FrontendHandler) HandleCreateVaga(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		return
+	}
+
+	title := r.FormValue("title")
+	department := r.FormValue("department")
+
+	if title == "" || department == "" {
+		http.Error(w, "Title and department are required", http.StatusBadRequest)
+		return
+	}
+
+	job := &domain.Job{
+		ID:         uuid.New(),
+		Title:      title,
+		Department: department,
+		CreatedAt:  time.Now(),
+	}
+
+	err = h.sessionRepo.CreateJob(r.Context(), job)
+	if err != nil {
+		http.Error(w, "Failed to create job", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/dashboard/vagas", http.StatusSeeOther)
 }
 
 // ServeInterviewPage renders the interview UI for a candidate

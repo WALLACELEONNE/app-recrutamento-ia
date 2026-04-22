@@ -77,6 +77,7 @@ func NewRouter(sessionHandler *handlers.SessionHandler, frontendHandler *handler
 			r.Use(middleware.RequireAuth)
 			r.Get("/dashboard", frontendHandler.ServeDashboardPage)
 			r.Get("/dashboard/vagas", frontendHandler.ServeVagasPage)
+			r.Post("/dashboard/vagas", frontendHandler.HandleCreateVaga)
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				http.Redirect(w, r, "/dashboard", http.StatusFound)
 			})

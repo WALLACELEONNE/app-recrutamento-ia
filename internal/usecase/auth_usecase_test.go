@@ -39,7 +39,7 @@ func TestAuthenticate_Success(t *testing.T) {
 
 	password := "mypassword"
 	hashBytes, _ := bcrypt.GenerateFromPassword([]byte(password), 10)
-	
+
 	user := &domain.User{
 		ID:             uuid.New(),
 		OrganizationID: uuid.New(),
@@ -51,7 +51,7 @@ func TestAuthenticate_Success(t *testing.T) {
 	mockRepo.On("GetByEmail", mock.Anything, "test@example.com").Return(user, nil)
 
 	token, err := uc.Authenticate(context.Background(), "test@example.com", password)
-	
+
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token)
 	mockRepo.AssertExpectations(t)
@@ -64,7 +64,7 @@ func TestAuthenticate_UserNotFound(t *testing.T) {
 	mockRepo.On("GetByEmail", mock.Anything, "unknown@example.com").Return(nil, errors.New("not found"))
 
 	token, err := uc.Authenticate(context.Background(), "unknown@example.com", "anypassword")
-	
+
 	assert.Error(t, err)
 	assert.Equal(t, usecase.ErrInvalidCredentials, err)
 	assert.Empty(t, token)
@@ -77,7 +77,7 @@ func TestAuthenticate_WrongPassword(t *testing.T) {
 
 	password := "mypassword"
 	hashBytes, _ := bcrypt.GenerateFromPassword([]byte(password), 10)
-	
+
 	user := &domain.User{
 		ID:             uuid.New(),
 		OrganizationID: uuid.New(),
@@ -89,7 +89,7 @@ func TestAuthenticate_WrongPassword(t *testing.T) {
 	mockRepo.On("GetByEmail", mock.Anything, "test@example.com").Return(user, nil)
 
 	token, err := uc.Authenticate(context.Background(), "test@example.com", "wrongpassword")
-	
+
 	assert.Error(t, err)
 	assert.Equal(t, usecase.ErrInvalidCredentials, err)
 	assert.Empty(t, token)

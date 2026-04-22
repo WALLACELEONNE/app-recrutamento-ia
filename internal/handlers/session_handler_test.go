@@ -63,7 +63,7 @@ func TestStartSession_Success(t *testing.T) {
 	router.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	
+
 	var response map[string]string
 	json.Unmarshal(w.Body.Bytes(), &response)
 	assert.Equal(t, "session started", response["message"])

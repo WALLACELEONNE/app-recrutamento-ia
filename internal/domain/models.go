@@ -126,6 +126,10 @@ type SessionRepository interface {
 	Create(ctx context.Context, session *InterviewSession) error
 	GetByID(ctx context.Context, id uuid.UUID) (*InterviewSession, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status SessionStatus) error
+	GetDashboardMetrics(ctx context.Context) (DashboardMetrics, error)
+	GetRecentInterviews(ctx context.Context, limit int) ([]RecentInterview, error)
+	GetJobs(ctx context.Context) ([]Job, error)
+	CreateJob(ctx context.Context, job *Job) error
 }
 
 // TurnRepository defines the database operations for conversation turns.

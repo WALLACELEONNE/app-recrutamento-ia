@@ -49,7 +49,7 @@ func main() {
 	sessionRepo := repository.NewSessionRepository(db)
 	sessionUC := usecase.NewSessionUseCase(sessionRepo)
 	sessionHandler := handlers.NewSessionHandler(sessionUC)
-	frontendHandler := handlers.NewFrontendHandler()
+	frontendHandler := handlers.NewFrontendHandler(sessionRepo)
 
 	// Initialize Auth Module
 	userRepo := repository.NewUserRepository(db.Pool)

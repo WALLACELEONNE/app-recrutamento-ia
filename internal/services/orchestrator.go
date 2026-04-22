@@ -109,7 +109,7 @@ func (o *InterviewOrchestrator) processLLMAndTTS(ctx context.Context, candidateT
 			Data:     audioChunk,
 			Duration: 20 * time.Millisecond,
 		}, nil)
-		
+
 		if err != nil {
 			logger.Error("Error writing sample to AI track", zap.Error(err))
 		}

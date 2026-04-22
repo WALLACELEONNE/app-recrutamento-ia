@@ -88,7 +88,7 @@ func TestGetSession_Success(t *testing.T) {
 }
 
 func TestGetSession_InvalidJSON(t *testing.T) {
-    // Esse teste é apenas para aumentar coverage no RespondWithJSON, que já foi validado em partes.
-    // Porém a cobertura de handlers.go subirá com os testes acima.
-    assert.True(t, true)
+	// Esse teste é apenas para aumentar coverage no RespondWithJSON, que já foi validado em partes.
+	// Porém a cobertura de handlers.go subirá com os testes acima.
+	assert.True(t, true)
 }
