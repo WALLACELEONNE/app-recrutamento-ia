@@ -46,7 +46,7 @@ func main() {
 	zlog.InitLogger()
 	defer zlog.Get().Sync()
 
-	port := getEnvOrDefault("WORKER_PORT", "4000")
+	port := getEnvOrDefault("PORT", "4000")
 	dbURL := getEnvOrDefault("DATABASE_URL", "postgres://admin:password@127.0.0.1:5432/recrutamento_db?sslmode=disable")
 	redisURL := getEnvOrDefault("REDIS_URL", "127.0.0.1:6379")
 
