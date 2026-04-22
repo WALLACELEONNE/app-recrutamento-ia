@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/username/app-recrutamento-ia/internal/domain"
 	"github.com/username/app-recrutamento-ia/internal/infrastructure/livekit"
+	"github.com/username/app-recrutamento-ia/internal/infrastructure/queue"
 	"github.com/username/app-recrutamento-ia/templates/pages"
 )
 
