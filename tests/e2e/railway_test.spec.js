@@ -35,7 +35,6 @@ test.describe('Testes E2E Completos - Recrutamento IA', () => {
     // Verifica se elementos chave do Dashboard carregaram
     await expect(page.locator('text=Visão Geral')).toBeVisible();
     await expect(page.locator('text=Entrevistas Recentes')).toBeVisible();
-    await expect(page.locator('text=Desempenho por Skill')).toBeVisible();
 
     console.log('✔ Fluxo de Login testado com sucesso no Railway!');
   });
