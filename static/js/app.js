@@ -72,17 +72,15 @@ document.addEventListener('alpine:init', () => {
                 }
                 
                 // Em ambiente de produção real, você usaria o URL correto do seu LiveKit server
-                // const wsUrl = window.location.hostname.includes('127.0.0.1') ? "ws://127.0.0.1:7880" : "wss://seu-livekit-server.com";
+                const wsUrl = window.location.hostname.includes('127.0.0.1') ? "ws://127.0.0.1:7880" : "wss://seu-livekit-server.com";
                 
-                // Simulate connection for UI testing purposes since we don't have a real LiveKit server running
-                console.log("Token received:", token);
+                console.log("Token received, connecting to LiveKit at:", wsUrl);
                 
-                // Simulate connection for UI testing purposes since we don't have a real token injected yet
-                setTimeout(() => {
-                    this.isConnected = true;
-                    this.candidateInstruction = 'Entrevista Pronta. Clique no microfone para começar.';
-                    this.setAiStatus('listening', 'A IA está pronta e ouvindo.');
-                }, 1500);
+                await this.room.connect(wsUrl, token);
+                
+                this.isConnected = true;
+                this.candidateInstruction = 'Entrevista Pronta. Clique no microfone para começar.';
+                this.setAiStatus('listening', 'A IA está pronta e ouvindo.');
 
             } catch (error) {
                 console.error('Failed to connect to LiveKit', error);
@@ -96,13 +94,13 @@ document.addEventListener('alpine:init', () => {
             try {
                 if (this.isMuted) {
                     // Turn Mic ON
-                    // In real LiveKit: await this.room.localParticipant.setMicrophoneEnabled(true);
+                    await this.room.localParticipant.setMicrophoneEnabled(true);
                     this.isMuted = false;
                     this.candidateInstruction = 'Pode falar, a IA está te ouvindo.';
                     this.setAiStatus('listening', 'Microfone ativado. A IA está ouvindo.');
                 } else {
                     // Turn Mic OFF
-                    // In real LiveKit: await this.room.localParticipant.setMicrophoneEnabled(false);
+                    await this.room.localParticipant.setMicrophoneEnabled(false);
                     this.isMuted = true;
                     this.candidateInstruction = 'Microfone mutado.';
                     this.setAiStatus('idle', 'Microfone desativado.');
