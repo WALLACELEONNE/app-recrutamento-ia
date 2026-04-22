@@ -68,6 +68,8 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	isSecure := r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https"
+	
 	// Set HttpOnly Cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:     "jwt_token",
@@ -75,7 +77,7 @@ func (h *AuthHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(24 * time.Hour),
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   false, // Deve ser true em produção com HTTPS!
+		Secure:   isSecure,
 		SameSite: http.SameSiteLaxMode,
 	})
 
