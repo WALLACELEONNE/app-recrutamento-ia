@@ -1,0 +1,28 @@
+{
+  "name": "app-recrutamento-ia",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:css": "npx tailwindcss -i ./static/css/input.css -o ./static/css/styles.css --minify"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WALLACELEONNE/app-recrutamento-ia.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/WALLACELEONNE/app-recrutamento-ia/issues"
+  },
+  "homepage": "https://github.com/WALLACELEONNE/app-recrutamento-ia#readme",
+  "devDependencies": {
+    "tailwindcss": "^3.4.3"
+  }
+}

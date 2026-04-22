@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/avast/retry-go/v4"
 	"github.com/haguro/elevenlabs-go"
 	"github.com/username/app-recrutamento-ia/internal/logger"
 	"go.uber.org/zap"
@@ -32,9 +33,6 @@ func NewTTSClient(apiKey, voiceID string) (*TTSClient, error) {
 }
 
 // SynthesizeStream consome texto do LLM (streaming) e gera áudio via ElevenLabs API.
-// NOTA: Para um streaming real e contínuo (texto parcial -> áudio parcial), a ElevenLabs recomenda
-// usar a API WebSocket. O SDK atual `haguro/elevenlabs-go` suporta chamadas HTTP (TextToSpeech).
-// Para manter a simplicidade inicial, vamos agrupar pequenas sentenças e chamar a API de Streaming HTTP.
 func (c *TTSClient) SynthesizeStream(ctx context.Context, textStream <-chan string) (<-chan []byte, error) {
 	outStream := make(chan []byte, 100)
 
@@ -60,7 +58,6 @@ func (c *TTSClient) SynthesizeStream(ctx context.Context, textStream <-chan stri
 				sentenceBuffer += textToken
 
 				// Heurística simples para quebrar em sentenças (pontuação)
-				// Em produção, isso deve ser mais robusto para não cortar no meio de siglas, etc.
 				if isPunctuation(textToken) && len(sentenceBuffer) > 10 {
 					textToSynthesize := sentenceBuffer
 					sentenceBuffer = "" // Limpa o buffer rapidamente para o próximo chunk
@@ -86,17 +83,31 @@ func (c *TTSClient) synthesizeAndSend(ctx context.Context, text string, outStrea
 
 	logger.Debug("Synthesizing TTS chunk", zap.String("text", text))
 
-	// TextToSpeech retorna o array de bytes do áudio (MP3 ou PCM dependendo da config)
-	// Para LiveKit, o ideal seria PCM, mas podemos configurar o header de accept no client interno.
-	// Por padrão retorna mp3.
-	audioBytes, err := c.client.TextToSpeech(c.voiceID, req)
+	var audioBytes []byte
+
+	// Adicionando Retry Logic robusta contra Rate Limiting e timeouts da ElevenLabs
+	err := retry.Do(
+		func() error {
+			var err error
+			audioBytes, err = c.client.TextToSpeech(c.voiceID, req)
+			if err != nil {
+				logger.Warn("ElevenLabs request failed, retrying...", zap.Error(err), zap.String("text", text))
+				return err
+			}
+			return nil
+		},
+		retry.Attempts(3),
+		retry.Delay(500*time.Millisecond),
+		retry.MaxDelay(2*time.Second),
+		retry.Context(ctx),
+	)
+
 	if err != nil {
-		logger.Error("Failed to synthesize text", zap.Error(err), zap.String("text", text))
+		logger.Error("Failed to synthesize text after retries", zap.Error(err), zap.String("text", text))
 		return
 	}
 
 	if len(audioBytes) > 0 {
-		// Envia os bytes gerados para o canal de saída (que será lido pelo LiveKit)
 		outStream <- audioBytes
 	}
 }

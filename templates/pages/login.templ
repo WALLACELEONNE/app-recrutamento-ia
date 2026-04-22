@@ -1,0 +1,106 @@
+package pages
+
+templ LoginPage() {
+	<!DOCTYPE html>
+	<html lang="pt-BR">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Login - Nova Voice Admin</title>
+			<link rel="stylesheet" href="/static/css/styles.css"/>
+			<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+			<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+		</head>
+		<body class="bg-slate-50 flex h-screen items-center justify-center font-sans">
+			
+			<div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-slate-100" 
+				 x-data="{
+					 email: '',
+					 password: '',
+					 errorMsg: '',
+					 loading: false,
+					 async submitLogin() {
+						 this.loading = true;
+						 this.errorMsg = '';
+						 try {
+							 const res = await fetch('/login', {
+								 method: 'POST',
+								 headers: { 'Content-Type': 'application/json' },
+								 body: JSON.stringify({ email: this.email, password: this.password })
+							 });
+							 
+							 if (!res.ok) {
+								 const text = await res.text();
+								 throw new Error(text || 'Credenciais inválidas');
+							 }
+							 
+							 const data = await res.json();
+							 if (data.success) {
+								 window.location.href = data.redirect;
+							 }
+						 } catch (err) {
+							 this.errorMsg = err.message;
+						 } finally {
+							 this.loading = false;
+						 }
+					 }
+				 }">
+				
+				<div class="text-center mb-8">
+					<h1 class="text-3xl font-bold text-indigo-600 tracking-tight">Nova Voice</h1>
+					<p class="text-slate-500 mt-2 text-sm">Painel de Administração e RH</p>
+				</div>
+
+				<form @submit.prevent="submitLogin" class="space-y-6">
+					
+					<!-- Alerta de Erro -->
+					<div x-show="errorMsg" x-transition x-cloak class="bg-rose-50 text-rose-600 p-3 rounded-md text-sm border border-rose-200">
+						<span x-text="errorMsg"></span>
+					</div>
+
+					<div>
+						<label for="email" class="block text-sm font-medium text-slate-700">E-mail corporativo</label>
+						<div class="mt-1">
+							<input id="email" x-model="email" type="email" autocomplete="email" required 
+								class="block w-full appearance-none rounded-md border border-slate-300 px-3 py-2 placeholder-slate-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"/>
+						</div>
+					</div>
+
+					<div>
+						<label for="password" class="block text-sm font-medium text-slate-700">Senha</label>
+						<div class="mt-1">
+							<input id="password" x-model="password" type="password" autocomplete="current-password" required 
+								class="block w-full appearance-none rounded-md border border-slate-300 px-3 py-2 placeholder-slate-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"/>
+						</div>
+					</div>
+
+					<div class="flex items-center justify-between">
+						<div class="flex items-center">
+							<input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"/>
+							<label for="remember-me" class="ml-2 block text-sm text-slate-900">Lembrar-me</label>
+						</div>
+
+						<div class="text-sm">
+							<a href="#" class="font-medium text-indigo-600 hover:text-indigo-500">Esqueceu a senha?</a>
+						</div>
+					</div>
+
+					<div>
+						<button type="submit" :disabled="loading" class="btn-primary w-full flex justify-center py-2.5">
+							<span x-show="!loading">Entrar no Painel</span>
+							<span x-show="loading" x-cloak>
+								<!-- Simple Spinner -->
+								<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+									<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+									<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+								</svg>
+								Autenticando...
+							</span>
+						</button>
+					</div>
+				</form>
+				
+			</div>
+		</body>
+	</html>
+}

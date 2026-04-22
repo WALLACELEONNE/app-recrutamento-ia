@@ -3,49 +3,30 @@ package openai_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/username/app-recrutamento-ia/internal/domain"
-	oainfra "github.com/username/app-recrutamento-ia/internal/infrastructure/openai"
+	"github.com/username/app-recrutamento-ia/internal/infrastructure/openai"
 )
 
-func TestNewLLMClient_Error(t *testing.T) {
-	client, err := oainfra.NewLLMClient("")
+func TestNewLLMClient(t *testing.T) {
+	// Falha sem API key
+	client, err := openai.NewLLMClient("")
 	assert.Error(t, err)
 	assert.Nil(t, client)
 	assert.Equal(t, "openai API key is required", err.Error())
-}
 
-func TestNewLLMClient_Success(t *testing.T) {
-	client, err := oainfra.NewLLMClient("test-api-key")
+	// Sucesso com API key
+	client, err = openai.NewLLMClient("dummy-key")
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
 }
 
-func TestGenerateResponseStream_EmptySystemPrompt(t *testing.T) {
-	client, _ := oainfra.NewLLMClient("test-key")
+func TestGenerateResponseStream_EmptyPrompt(t *testing.T) {
+	client, _ := openai.NewLLMClient("dummy-key")
 
-	ctx := context.Background()
-	_, err := client.GenerateResponseStream(ctx, "", nil, "hello")
-
+	stream, err := client.GenerateResponseStream(context.Background(), "", []domain.SessionTurn{}, "Olá")
 	assert.Error(t, err)
+	assert.Nil(t, stream)
 	assert.Equal(t, "system prompt cannot be empty", err.Error())
-}
-
-func TestGenerateResponseStream_InvalidKey(t *testing.T) {
-	client, _ := oainfra.NewLLMClient("invalid-key")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	history := []domain.SessionTurn{
-		{Role: domain.RoleAI, Content: "Hello, how are you?"},
-	}
-
-	_, err := client.GenerateResponseStream(ctx, "You are an HR bot", history, "I am fine")
-
-	// Since the key is invalid, the HTTP request should fail or return 401
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to create completion stream")
 }

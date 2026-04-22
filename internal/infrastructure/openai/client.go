@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
+	"github.com/avast/retry-go/v4"
 	"github.com/sashabaranov/go-openai"
 	"github.com/username/app-recrutamento-ia/internal/domain"
 	"github.com/username/app-recrutamento-ia/internal/logger"
@@ -29,6 +31,7 @@ func NewLLMClient(apiKey string) (*LLMClient, error) {
 }
 
 // GenerateResponseStream envia o histórico e o prompt atual para a OpenAI e retorna um stream de tokens.
+// Inclui lógica de retry robusta para tolerância a falhas na comunicação com a API externa.
 func (c *LLMClient) GenerateResponseStream(ctx context.Context, systemPrompt string, history []domain.SessionTurn, currentTurn string) (<-chan string, error) {
 	if systemPrompt == "" {
 		return nil, errors.New("system prompt cannot be empty")
@@ -70,9 +73,27 @@ func (c *LLMClient) GenerateResponseStream(ctx context.Context, systemPrompt str
 		MaxTokens: 150, // Respostas curtas e conversacionais
 	}
 
-	stream, err := c.client.CreateChatCompletionStream(ctx, req)
+	var stream *openai.ChatCompletionStream
+
+	// Lógica de retry para criação do stream (trata rate limits ou falhas de conexão iniciais)
+	err := retry.Do(
+		func() error {
+			var err error
+			stream, err = c.client.CreateChatCompletionStream(ctx, req)
+			if err != nil {
+				logger.Warn("OpenAI stream creation failed, retrying...", zap.Error(err))
+				return err
+			}
+			return nil
+		},
+		retry.Attempts(3),
+		retry.Delay(1*time.Second),
+		retry.MaxDelay(5*time.Second),
+		retry.Context(ctx),
+	)
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to create completion stream: %w", err)
+		return nil, fmt.Errorf("failed to create completion stream after retries: %w", err)
 	}
 
 	go func() {
@@ -90,7 +111,7 @@ func (c *LLMClient) GenerateResponseStream(ctx context.Context, systemPrompt str
 					return
 				}
 				if err != nil {
-					logger.Error("OpenAI stream error", zap.Error(err))
+					logger.Error("OpenAI stream error during recv", zap.Error(err))
 					return
 				}
 

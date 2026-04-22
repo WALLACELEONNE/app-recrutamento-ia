@@ -24,7 +24,7 @@ func main() {
 	zlog.InitLogger()
 	defer zlog.Get().Sync()
 
-	hostURL := getEnvOrDefault("LIVEKIT_URL", "ws://localhost:7880")
+	hostURL := getEnvOrDefault("LIVEKIT_URL", "ws://127.0.0.1:7880")
 	apiKey := getEnvOrDefault("LIVEKIT_API_KEY", "devkey")
 	apiSecret := getEnvOrDefault("LIVEKIT_API_SECRET", "secret")
 

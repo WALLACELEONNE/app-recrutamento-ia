@@ -4,29 +4,26 @@ Este documento descreve os comandos detalhados para rodar a aplicação em um am
 
 ## 1. Execução Local com Docker Compose
 
-A infraestrutura local orquestra 5 serviços:
+A infraestrutura local orquestra **6 serviços**:
 - `postgres` (Banco de Dados)
 - `redis` (Cache / Sessões)
 - `livekit` (Servidor WebRTC/WebSocket)
-- `server` (A aplicação principal HTTP)
-- `worker` (O processo de Inteligência Artificial que consome LiveKit)
+- `server` (A aplicação principal HTTP em Golang)
+- `worker` (O processo de IA que consome LiveKit)
+- `nginx` (Proxy Reverso e Load Balancer)
 
-### Passo a passo para inicializar:
+### Escalabilidade Horizontal Local
 
-1. **Crie os arquivos de ambiente**:
-   Copie o arquivo `.env.example` para `.env.development`:
+O arquivo `docker-compose.yml` está preparado para escalar instâncias de `server` e `worker` sob demanda, pois removemos portas hardcoded em favor do Nginx roteando o tráfego interno do Docker.
+
+1. **Inicie os containers e escale o servidor para 3 instâncias**:
    ```bash
-   cp .env.example .env.development
+   docker-compose up --build --scale server=3 -d
    ```
-   *(Preencha as chaves de API reais do Deepgram, OpenAI e ElevenLabs no `.env.development`)*
+   *O Nginx fará o round-robin automático das requisições na porta 3000 para as três réplicas do Server.*
 
-2. **Inicie os containers**:
-   Esse comando fará o build dos Dockerfiles otimizados (`Dockerfile.server` e `Dockerfile.worker`) e fará o binding com a rede customizada (`app-network`).
-   ```bash
-   docker-compose up --build -d
-   ```
-
-3. **Acompanhar os logs**:
+2. **Acompanhar os logs centralizados**:
+   O Docker está configurado com limites de tamanho de log (`json-file`, max 10m) para evitar que seu disco fique cheio.
    Para ver todos os logs em tempo real:
    ```bash
    docker-compose logs -f

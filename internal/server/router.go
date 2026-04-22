@@ -15,7 +15,7 @@ import (
 )
 
 // NewRouter creates and configures the main HTTP router for the application.
-func NewRouter(sessionHandler *handlers.SessionHandler) *chi.Mux {
+func NewRouter(sessionHandler *handlers.SessionHandler, frontendHandler *handlers.FrontendHandler, authHandler *handlers.AuthHandler) *chi.Mux {
 	r := chi.NewRouter()
 
 	// Base middlewares
@@ -50,13 +50,56 @@ func NewRouter(sessionHandler *handlers.SessionHandler) *chi.Mux {
 			_, _ = w.Write([]byte(`{"status": "active"}`))
 		})
 
-		// Session routes
-		if sessionHandler != nil {
-			r.Route("/sessions", func(r chi.Router) {
-				r.Get("/{id}", sessionHandler.GetSession)
-				r.Post("/{id}/start", sessionHandler.StartSession)
+		// Protected API routes
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.RequireAuth)
+
+			// Session routes (Admin/HR only)
+			if sessionHandler != nil {
+				r.Route("/sessions", func(r chi.Router) {
+					r.Get("/{id}", sessionHandler.GetSession)
+					r.Post("/{id}/start", sessionHandler.StartSession)
+				})
+			}
+		})
+	})
+
+	// Auth routes
+	if authHandler != nil {
+		r.Get("/login", authHandler.ServeLoginPage)
+		r.Post("/login", authHandler.HandleLogin)
+		r.Get("/logout", authHandler.HandleLogout)
+	}
+
+	// Frontend / PWA Routes
+	if frontendHandler != nil {
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.RequireAuth)
+			r.Get("/dashboard", frontendHandler.ServeDashboardPage)
+			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, "/dashboard", http.StatusFound)
 			})
-		}
+		})
+
+		// Public candidate route
+		r.Get("/interview/{id}", frontendHandler.ServeInterviewPage)
+	}
+
+	// Serve static files for PWA (Service Worker, Manifest, CSS, JS, Images)
+	fileServer := http.FileServer(http.Dir("./static"))
+	r.Handle("/static/*", http.StripPrefix("/static/", fileServer))
+
+	// Serve root level PWA files
+	r.Get("/manifest.json", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/manifest.json")
+	})
+	r.Get("/sw.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/javascript")
+		w.Header().Set("Service-Worker-Allowed", "/")
+		http.ServeFile(w, r, "./static/sw.js")
+	})
+	r.Get("/offline.html", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/offline.html")
 	})
 
 	return r

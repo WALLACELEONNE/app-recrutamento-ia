@@ -31,7 +31,7 @@ definitions:
     - SessionStatusInvited
     - SessionStatusInProgress
     - SessionStatusDone
-host: localhost:3000
+host: 127.0.0.1:3000
 info:
   contact: {}
   description: Plataforma SaaS de entrevistas por voz com IA

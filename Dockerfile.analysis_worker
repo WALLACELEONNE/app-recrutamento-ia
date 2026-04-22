@@ -1,0 +1,38 @@
+# Etapa 1: Build
+FROM golang:1.21-alpine AS builder
+
+WORKDIR /app
+
+# Instalar dependências necessárias para compilar (caso precise de CGO, etc)
+RUN apk add --no-cache git ca-certificates
+
+# Copiar go.mod e go.sum
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copiar código fonte
+COPY . .
+
+# Compilar o worker de análise estaticamente
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o analysis_worker ./cmd/analysis_worker/main.go
+
+# Etapa 2: Runtime
+FROM alpine:latest
+
+WORKDIR /app
+
+# Adicionar certificados TLS (necessário para HTTPS/API externas)
+RUN apk --no-cache add ca-certificates tzdata
+
+# Copiar binário compilado
+COPY --from=builder /app/analysis_worker .
+
+# Variáveis de ambiente (sobrescritas no runtime)
+ENV WORKER_PORT=4000
+ENV GIN_MODE=release
+
+# O Worker de Análise expõe a porta 4000 para métricas/health/REST
+EXPOSE 4000
+
+# Executar o worker
+CMD ["./analysis_worker"]

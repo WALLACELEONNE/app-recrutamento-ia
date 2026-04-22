@@ -1,17 +1,25 @@
 # Build Stage
-FROM golang:1.21-alpine AS builder
+FROM golang:alpine AS builder
 
 WORKDIR /app
 
-# Instala dependências de sistema necessárias
-RUN apk add --no-cache gcc musl-dev
+# Instala ferramentas necessárias para o Frontend Build
+RUN apk add --no-cache gcc musl-dev nodejs npm curl
 
-# Baixa as dependências Go
-COPY go.mod go.sum ./
+# Instala Templ CLI
+RUN go install github.com/a-h/templ/cmd/templ@latest
+
+# Copia os arquivos de dependência Go e Node
+COPY go.mod go.sum package.json package-lock.json* ./
 RUN go mod download
+RUN npm install
 
 # Copia o código-fonte
 COPY . .
+
+# Gera os templates Go e compila o Tailwind CSS
+RUN templ generate
+RUN npm run build:css
 
 # Compila o binário do Server otimizado (sem debug info)
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o server ./cmd/server
@@ -21,17 +29,23 @@ FROM alpine:3.19
 
 WORKDIR /app
 
-# Adiciona certificados SSL e fuso horário
+# Instala certificados TLS para chamadas HTTPS/WSS e Timezone
 RUN apk --no-cache add ca-certificates tzdata
 
-# Copia o binário compilado do estágio anterior
+# Copia o binário do Server
 COPY --from=builder /app/server .
 
-# Expõe a porta do servidor
+# Copia os assets estáticos necessários para o Runtime
+COPY --from=builder /app/static ./static
+
+# Opcional: Se usarmos Swagger JSON gerado em runtime
+COPY --from=builder /app/docs ./docs
+
+# A porta que o server Go escutará
 EXPOSE 3000
 
-# Healthcheck customizado para o Server
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+# Healthcheck para garantir que o server iniciou
+HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/health || exit 1
 
 # Comando de inicialização

@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
+	"github.com/avast/retry-go/v4"
 	apiinterfaces "github.com/deepgram/deepgram-go-sdk/pkg/api/listen/v1/websocket/interfaces"
 	"github.com/deepgram/deepgram-go-sdk/pkg/client/interfaces"
 	listen "github.com/deepgram/deepgram-go-sdk/pkg/client/listen/v1/websocket"
@@ -77,16 +79,37 @@ func (c *STTClient) TranscribeStream(ctx context.Context, audioStream <-chan []b
 	}
 
 	callback := &dgCallback{outStream: outStream}
-
 	clientOptions := &interfaces.ClientOptions{}
-	dgClient, err := listen.NewUsingCallback(ctx, c.apiKey, clientOptions, opts, callback)
-	if err != nil {
-		return nil, fmt.Errorf("failed to init deepgram client: %w", err)
-	}
 
-	bConnected := dgClient.Connect()
-	if !bConnected {
-		return nil, errors.New("failed to connect to Deepgram live API")
+	var dgClient *listen.Client
+
+	// Adicionando Retry Logic para conexão ao Deepgram
+	err := retry.Do(
+		func() error {
+			var err error
+			dgClient, err = listen.NewUsingCallback(ctx, c.apiKey, clientOptions, opts, callback)
+			if err != nil {
+				return fmt.Errorf("failed to init deepgram client: %w", err)
+			}
+
+			bConnected := dgClient.Connect()
+			if !bConnected {
+				return errors.New("failed to connect to Deepgram live API")
+			}
+
+			return nil
+		},
+		retry.Attempts(3),
+		retry.Delay(1*time.Second),
+		retry.MaxDelay(5*time.Second),
+		retry.Context(ctx),
+		retry.OnRetry(func(n uint, err error) {
+			logger.Warn("Deepgram connection failed, retrying...", zap.Uint("attempt", n), zap.Error(err))
+		}),
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("deepgram connection failed after retries: %w", err)
 	}
 
 	go func() {
@@ -103,11 +126,12 @@ func (c *STTClient) TranscribeStream(ctx context.Context, audioStream <-chan []b
 					logger.Info("Audio stream closed")
 					return
 				}
-
-				_, err := dgClient.Write(audioData)
-				if err != nil {
-					logger.Error("Error writing audio to deepgram", zap.Error(err))
-					return
+				// Envia o chunk de áudio para o Deepgram
+				if len(audioData) > 0 {
+					_, err := dgClient.Write(audioData)
+					if err != nil {
+						logger.Error("Failed to write audio to Deepgram", zap.Error(err))
+					}
 				}
 			}
 		}

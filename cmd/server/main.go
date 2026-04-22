@@ -20,7 +20,7 @@ import (
 // @title App Recrutamento IA - API
 // @version 1.0
 // @description Plataforma SaaS de entrevistas por voz com IA
-// @host localhost:3000
+// @host 127.0.0.1:3000
 // @BasePath /api/v1
 func main() {
 	_ = godotenv.Load()
@@ -31,7 +31,7 @@ func main() {
 	port := getEnvOrDefault("PORT", "3000")
 
 	// Dependências da Clean Architecture
-	dbURL := getEnvOrDefault("DATABASE_URL", "postgres://admin:password@localhost:5432/recrutamento_db?sslmode=disable")
+	dbURL := getEnvOrDefault("DATABASE_URL", "postgres://admin:password@127.0.0.1:5432/recrutamento_db?sslmode=disable")
 	db, err := repository.NewDB(context.Background(), dbURL)
 	if err != nil {
 		logger.Fatal("Failed to connect to database", zap.Error(err))
@@ -41,9 +41,15 @@ func main() {
 	sessionRepo := repository.NewSessionRepository(db)
 	sessionUC := usecase.NewSessionUseCase(sessionRepo)
 	sessionHandler := handlers.NewSessionHandler(sessionUC)
+	frontendHandler := handlers.NewFrontendHandler()
+
+	// Initialize Auth Module
+	userRepo := repository.NewUserRepository(db.Pool)
+	authUC := usecase.NewAuthUseCase(userRepo)
+	authHandler := handlers.NewAuthHandler(authUC)
 
 	// Inicializa o roteador com os handlers injetados
-	router := server.NewRouter(sessionHandler)
+	router := server.NewRouter(sessionHandler, frontendHandler, authHandler)
 
 	srv := &http.Server{
 		Addr:    ":" + port,

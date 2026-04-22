@@ -33,6 +33,16 @@ type Organization struct {
 	CreatedAt  time.Time `json:"created_at"`
 }
 
+// User represents a system administrator or HR recruiter.
+type User struct {
+	ID             uuid.UUID `json:"id"`
+	OrganizationID uuid.UUID `json:"organization_id"`
+	Email          string    `json:"email"`
+	PasswordHash   string    `json:"-"`
+	Role           string    `json:"role"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
 // Job represents an open position with interview configurations.
 type Job struct {
 	ID              uuid.UUID `json:"id"`
@@ -101,6 +111,12 @@ type SessionRepository interface {
 type TurnRepository interface {
 	AddTurn(ctx context.Context, turn *SessionTurn) error
 	GetTurnsBySession(ctx context.Context, sessionID uuid.UUID) ([]*SessionTurn, error)
+}
+
+// UserRepository defines the database operations for users.
+type UserRepository interface {
+	GetByEmail(ctx context.Context, email string) (*User, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
 }
 
 // STTClient is the interface for Speech-to-Text providers (e.g., Deepgram).
