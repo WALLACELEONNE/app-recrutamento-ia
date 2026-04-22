@@ -106,6 +106,9 @@ func NewRouter(sessionHandler *handlers.SessionHandler, frontendHandler *handler
 	r.Get("/offline.html", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/offline.html")
 	})
+	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
 
 	return r
 }

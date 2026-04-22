@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nova-voice-v1';
+const CACHE_NAME = 'nova-voice-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json',
@@ -6,8 +6,6 @@ const ASSETS_TO_CACHE = [
   '/static/js/app.js',
   'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js',
   'https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.js',
-  '/static/img/icon-192x192.png',
-  '/static/img/icon-512x512.png',
   // Offline fallback page if needed
   '/offline.html'
 ];
