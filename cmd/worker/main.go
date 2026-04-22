@@ -111,6 +111,9 @@ func main() {
 			return err
 		}
 
+		// A IA se introduz para iniciar a entrevista
+		go orchestrator.Introduce(ctx, "Desenvolvedor de Software") // Pode vir do payload do job futuramente
+
 		log.Printf("Conectado à sala %s com sucesso!", room.Name())
 		return nil
 	})

@@ -72,9 +72,9 @@ func (c *STTClient) TranscribeStream(ctx context.Context, audioStream <-chan []b
 		Language:       "pt-BR",
 		Model:          "nova-2",
 		Punctuate:      true,
-		Encoding:       "linear16",
+		Encoding:       "opus",
 		Channels:       1,
-		SampleRate:     16000,
+		SampleRate:     48000,
 		InterimResults: true,
 	}
 

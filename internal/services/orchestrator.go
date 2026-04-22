@@ -55,6 +55,40 @@ func (o *InterviewOrchestrator) SetupAITrack(room *lksdk.Room) error {
 	return nil
 }
 
+// Introduce faz a IA iniciar a conversa contextualizada com a vaga
+func (o *InterviewOrchestrator) Introduce(ctx context.Context, jobTitle string) {
+	// Atraso intencional para garantir que a conexão WebRTC no frontend estabilize
+	time.Sleep(2 * time.Second)
+
+	systemPrompt := "Você é a Nova, uma IA recrutadora gentil e objetiva."
+	history := []domain.SessionTurn{}
+
+	introPrompt := "Inicie a entrevista se apresentando brevemente e perguntando ao candidato se ele está pronto para a vaga de " + jobTitle + "."
+
+	llmStream, err := o.llmClient.GenerateResponseStream(ctx, systemPrompt, history, introPrompt)
+	if err != nil {
+		logger.Error("Failed to generate intro", zap.Error(err))
+		return
+	}
+
+	audioBytesStream, err := o.ttsClient.SynthesizeStream(ctx, llmStream)
+	if err != nil {
+		logger.Error("Failed to synthesize intro TTS", zap.Error(err))
+		return
+	}
+
+	for audioChunk := range audioBytesStream {
+		err = o.aiTrack.WriteSample(media.Sample{
+			Data:     audioChunk,
+			Duration: 20 * time.Millisecond,
+		}, nil)
+
+		if err != nil {
+			logger.Error("Error writing intro sample", zap.Error(err))
+		}
+	}
+}
+
 // HandleCandidateAudio processa o áudio vindo do candidato.
 func (o *InterviewOrchestrator) HandleCandidateAudio(ctx context.Context, track *webrtc.TrackRemote, rp *lksdk.RemoteParticipant) {
 	audioStream := make(chan []byte, 100)

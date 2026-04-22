@@ -21,6 +21,13 @@ templ InterviewRoom(sessionID string, token string, livekitURL string) {
 					</span>
 					<span x-text="isConnected ? 'Conectado à sessão' : 'Aguardando conexão...'"></span>
 				</p>
+				<!-- Timer Display -->
+				<div x-show="isConnected" x-cloak class="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-mono font-semibold">
+					<svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+					</svg>
+					<span x-text="formattedTime"></span>
+				</div>
 			</div>
 
 			<!-- Visualizador Principal da IA (Avatar / Ondas) -->
@@ -57,9 +64,13 @@ templ InterviewRoom(sessionID string, token string, livekitURL string) {
 						@click="toggleMute()"
 						:disabled="!isConnected"
 						class="flex-1 flex justify-center items-center py-4 rounded-xl font-semibold text-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-slate-50 dark:focus:ring-offset-slate-900"
-						:class="isMuted ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 focus:ring-slate-300 dark:focus:ring-slate-500' : 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-500/30 focus:ring-indigo-400'">
+						:class="{
+							'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 focus:ring-slate-300 dark:focus:ring-slate-500': isMuted,
+							'bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-500/30 focus:ring-indigo-400': !isMuted,
+							'ring-4 ring-indigo-400 ring-offset-2 ring-offset-slate-900 scale-105 shadow-[0_0_20px_rgba(99,102,241,0.5)]': isSpeaking
+						}">
 						
-						<svg x-show="!isMuted" class="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<svg x-show="!isMuted" class="w-6 h-6 mr-2 transition-transform duration-200" :class="isSpeaking ? 'scale-125' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
 						</svg>
 						

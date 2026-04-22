@@ -9,9 +9,18 @@ document.addEventListener('alpine:init', () => {
         return {
             isConnected: false,
             isMuted: true,
+            isSpeaking: false,
             aiStatus: 'idle', // 'idle', 'listening', 'processing', 'speaking'
             aiStatusText: 'Aguardando início da sessão',
             candidateInstruction: 'Permita o acesso ao microfone e clique em iniciar.',
+            timeRemaining: 15 * 60, // 15 minutos em segundos
+            timerInterval: null,
+
+            get formattedTime() {
+                const minutes = Math.floor(this.timeRemaining / 60);
+                const seconds = this.timeRemaining % 60;
+                return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            },
 
             async init() {
                 console.log('Nova Voice AI Player Initialized');
@@ -40,12 +49,39 @@ document.addEventListener('alpine:init', () => {
                         this.isConnected = true;
                         this.candidateInstruction = 'Você está conectado. Desmute o microfone para falar com a IA.';
                         this.setAiStatus('idle', 'A Inteligência Artificial está aguardando você falar.');
+                        this.startTimer();
                     });
 
                     room.on(LivekitClient.RoomEvent.Disconnected, () => {
                         this.isConnected = false;
                         this.candidateInstruction = 'Conexão encerrada.';
                         this.setAiStatus('idle', 'Sessão encerrada.');
+                        this.stopTimer();
+                    });
+
+                    room.on(LivekitClient.RoomEvent.ActiveSpeakersChanged, (speakers) => {
+                        let localSpeaking = false;
+                        let remoteSpeaking = false;
+
+                        speakers.forEach((p) => {
+                            if (p === room.localParticipant) {
+                                localSpeaking = true;
+                            } else {
+                                remoteSpeaking = true;
+                            }
+                        });
+
+                        this.isSpeaking = localSpeaking;
+                        
+                        if (remoteSpeaking) {
+                            this.setAiStatus('speaking', 'A Inteligência Artificial está falando.');
+                        } else {
+                            if (!this.isMuted) {
+                                this.setAiStatus('listening', 'A Inteligência Artificial está ouvindo.');
+                            } else {
+                                this.setAiStatus('idle', 'Aguardando ação do candidato.');
+                            }
+                        }
                     });
 
                     room.on(LivekitClient.RoomEvent.TrackSubscribed, (track, publication, participant) => {
@@ -135,6 +171,26 @@ document.addEventListener('alpine:init', () => {
             setAiStatus(status, accessibleText) {
                 this.aiStatus = status;
                 this.aiStatusText = accessibleText;
+            },
+
+            startTimer() {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                this.timerInterval = setInterval(() => {
+                    if (this.timeRemaining > 0) {
+                        this.timeRemaining--;
+                    } else {
+                        this.stopTimer();
+                        this.endInterview();
+                        alert('O tempo da entrevista (15 minutos) expirou.');
+                    }
+                }, 1000);
+            },
+
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
             }
         };
     });
