@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -118,7 +119,7 @@ func (r *pgSessionRepository) GetDashboardMetrics(ctx context.Context) (domain.D
 // GetRecentInterviews retrieves a list of recent interviews.
 func (r *pgSessionRepository) GetRecentInterviews(ctx context.Context, limit int) ([]domain.RecentInterview, error) {
 	query := `
-		SELECT c.name, j.title, s.status, s.score
+		SELECT s.id, c.name, j.title, s.status, s.score
 		FROM interview_sessions s
 		JOIN candidates c ON s.candidate_id = c.id
 		JOIN jobs j ON s.job_id = j.id
@@ -135,7 +136,7 @@ func (r *pgSessionRepository) GetRecentInterviews(ctx context.Context, limit int
 	for rows.Next() {
 		var interview domain.RecentInterview
 		var score *string
-		if err := rows.Scan(&interview.CandidateName, &interview.JobTitle, &interview.Status, &score); err != nil {
+		if err := rows.Scan(&interview.SessionID, &interview.CandidateName, &interview.JobTitle, &interview.Status, &score); err != nil {
 			return nil, fmt.Errorf("failed to scan interview row: %w", err)
 		}
 		if score != nil {
@@ -151,7 +152,7 @@ func (r *pgSessionRepository) GetRecentInterviews(ctx context.Context, limit int
 
 // GetJobs retrieves all jobs.
 func (r *pgSessionRepository) GetJobs(ctx context.Context) ([]domain.Job, error) {
-	query := `SELECT id, title, department, created_at FROM jobs ORDER BY created_at DESC`
+	query := `SELECT id, title, department, interview_config, created_at FROM jobs ORDER BY created_at DESC`
 	rows, err := r.db.Pool.Query(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query jobs: %w", err)
@@ -161,8 +162,12 @@ func (r *pgSessionRepository) GetJobs(ctx context.Context) ([]domain.Job, error)
 	var jobs []domain.Job
 	for rows.Next() {
 		var job domain.Job
-		if err := rows.Scan(&job.ID, &job.Title, &job.Department, &job.CreatedAt); err != nil {
+		var configBytes []byte
+		if err := rows.Scan(&job.ID, &job.Title, &job.Department, &configBytes, &job.CreatedAt); err != nil {
 			return nil, fmt.Errorf("failed to scan job: %w", err)
+		}
+		if len(configBytes) > 0 {
+			_ = json.Unmarshal(configBytes, &job.InterviewConfig)
 		}
 		jobs = append(jobs, job)
 	}
@@ -171,10 +176,92 @@ func (r *pgSessionRepository) GetJobs(ctx context.Context) ([]domain.Job, error)
 
 // CreateJob creates a new job.
 func (r *pgSessionRepository) CreateJob(ctx context.Context, job *domain.Job) error {
-	query := `INSERT INTO jobs (id, title, department, created_at) VALUES ($1, $2, $3, $4)`
-	_, err := r.db.Pool.Exec(ctx, query, job.ID, job.Title, job.Department, job.CreatedAt)
+	configBytes, _ := json.Marshal(job.InterviewConfig)
+	query := `INSERT INTO jobs (id, title, department, interview_config, created_at) VALUES ($1, $2, $3, $4, $5)`
+	_, err := r.db.Pool.Exec(ctx, query, job.ID, job.Title, job.Department, configBytes, job.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("failed to insert job: %w", err)
 	}
+	return nil
+}
+
+// GetSessionReport retrieves the complete interview report for the HR view.
+func (r *pgSessionRepository) GetSessionReport(ctx context.Context, sessionID uuid.UUID) (domain.ReportData, error) {
+	var report domain.ReportData
+
+	// 1. Get Session details
+	session, err := r.GetByID(ctx, sessionID)
+	if err != nil {
+		return report, fmt.Errorf("failed to get session for report: %w", err)
+	}
+	report.Session = *session
+
+	// 2. Get Candidate details
+	candidateQuery := `SELECT id, name, email, job_id, created_at FROM candidates WHERE id = $1`
+	err = r.db.Pool.QueryRow(ctx, candidateQuery, session.CandidateID).Scan(
+		&report.Candidate.ID,
+		&report.Candidate.Name,
+		&report.Candidate.Email,
+		&report.Candidate.JobID,
+		&report.Candidate.ExpiresAt, // Using ExpiresAt to hold created_at for simplicity in this view
+	)
+	if err != nil {
+		return report, fmt.Errorf("failed to get candidate for report: %w", err)
+	}
+
+	// 3. Get Job details
+	jobQuery := `SELECT id, title, department, interview_config FROM jobs WHERE id = $1`
+	var configBytes []byte
+	err = r.db.Pool.QueryRow(ctx, jobQuery, session.JobID).Scan(
+		&report.Job.ID,
+		&report.Job.Title,
+		&report.Job.Department,
+		&configBytes,
+	)
+	if err != nil {
+		return report, fmt.Errorf("failed to get job for report: %w", err)
+	}
+	if len(configBytes) > 0 {
+		_ = json.Unmarshal(configBytes, &report.Job.InterviewConfig)
+	}
+
+	// 4. Get Turns (Transcript)
+	turnsQuery := `SELECT id, role, content, turn_index, audio_offset_ms, duration_ms FROM session_turns WHERE session_id = $1 ORDER BY turn_index ASC`
+	rows, err := r.db.Pool.Query(ctx, turnsQuery, sessionID)
+	if err != nil {
+		return report, fmt.Errorf("failed to query turns for report: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var turn domain.SessionTurn
+		turn.SessionID = sessionID
+		if err := rows.Scan(&turn.ID, &turn.Role, &turn.Content, &turn.TurnIndex, &turn.AudioOffsetMs, &turn.DurationMs); err != nil {
+			return report, fmt.Errorf("failed to scan turn: %w", err)
+		}
+		report.Turns = append(report.Turns, turn)
+	}
+
+	return report, nil
+}
+
+// CreateCandidate creates a new candidate in the database.
+func (r *pgSessionRepository) CreateCandidate(ctx context.Context, candidate *domain.Candidate) error {
+	query := `
+		INSERT INTO candidates (id, name, email, job_id, created_at)
+		VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+	`
+	_, err := r.db.Pool.Exec(ctx, query,
+		candidate.ID,
+		candidate.Name,
+		candidate.Email,
+		candidate.JobID,
+	)
+
+	if err != nil {
+		logger.Error("Failed to create candidate", zap.Error(err), zap.String("candidate_id", candidate.ID.String()))
+		return fmt.Errorf("repository: failed to create candidate: %w", err)
+	}
+
 	return nil
 }

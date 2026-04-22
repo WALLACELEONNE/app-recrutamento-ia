@@ -95,6 +95,46 @@ templ VagasHome(jobs []domain.Job) {
 										<input type="text" name="department" id="department" required class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-white dark:ring-slate-700 dark:focus:ring-indigo-500" placeholder="Ex: Tecnologia" />
 									</div>
 								</div>
+								
+								<div class="grid grid-cols-2 gap-4">
+									<div>
+										<label for="n_questions" class="block text-sm font-medium leading-6 text-slate-900 dark:text-slate-200">Qtd. Perguntas</label>
+										<div class="mt-2">
+											<input type="number" name="n_questions" id="n_questions" min="1" max="20" value="5" class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-white dark:ring-slate-700 dark:focus:ring-indigo-500" />
+										</div>
+									</div>
+									<div>
+										<label for="max_minutes" class="block text-sm font-medium leading-6 text-slate-900 dark:text-slate-200">Tempo Máx (min)</label>
+										<div class="mt-2">
+											<input type="number" name="max_minutes" id="max_minutes" min="1" max="60" value="15" class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-white dark:ring-slate-700 dark:focus:ring-indigo-500" />
+										</div>
+									</div>
+								</div>
+
+								<div>
+									<label for="persona" class="block text-sm font-medium leading-6 text-slate-900 dark:text-slate-200">Persona da IA (Opcional)</label>
+									<div class="mt-2">
+										<input type="text" name="persona" id="persona" class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-white dark:ring-slate-700 dark:focus:ring-indigo-500" placeholder="Ex: Tech Recruiter Sênior" />
+									</div>
+								</div>
+
+								<div>
+									<label for="tone" class="block text-sm font-medium leading-6 text-slate-900 dark:text-slate-200">Tom de Voz</label>
+									<div class="mt-2">
+										<select name="tone" id="tone" class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-white dark:ring-slate-700 dark:focus:ring-indigo-500">
+											<option value="profissional">Profissional</option>
+											<option value="amigavel">Amigável e Descontraído</option>
+											<option value="tecnico">Técnico e Direto</option>
+										</select>
+									</div>
+								</div>
+
+								<div>
+									<label for="focus_areas" class="block text-sm font-medium leading-6 text-slate-900 dark:text-slate-200">Áreas de Foco (separadas por vírgula)</label>
+									<div class="mt-2">
+										<input type="text" name="focus_areas" id="focus_areas" class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-white dark:ring-slate-700 dark:focus:ring-indigo-500" placeholder="Ex: Go, Docker, Clean Architecture" />
+									</div>
+								</div>
 							</div>
 							<div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
 								<button type="submit" class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2">Salvar</button>

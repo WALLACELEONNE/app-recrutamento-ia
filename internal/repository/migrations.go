@@ -50,6 +50,17 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool) error {
 			audio_s3_key TEXT,
 			transcript_s3_key TEXT
 		);`,
+		`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS interview_config JSONB DEFAULT '{}'::jsonb;`,
+		`CREATE TABLE IF NOT EXISTS session_turns (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			session_id UUID REFERENCES interview_sessions(id),
+			role VARCHAR(50) NOT NULL,
+			content TEXT NOT NULL,
+			turn_index INT NOT NULL,
+			audio_offset_ms INT,
+			duration_ms INT,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+		);`,
 	}
 
 	for _, query := range queries {

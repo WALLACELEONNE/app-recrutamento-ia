@@ -1,0 +1,71 @@
+package pages
+
+import (
+	"github.com/username/app-recrutamento-ia/templates/layouts"
+	"github.com/username/app-recrutamento-ia/internal/domain"
+	"fmt"
+)
+
+templ InterviewReport(data domain.ReportData) {
+	@layouts.DashboardLayout(fmt.Sprintf("Relatório - %s", data.Candidate.Name)) {
+		<div class="space-y-6">
+			<div class="flex justify-between items-center">
+				<h2 class="text-2xl font-bold leading-7 text-slate-900 dark:text-white sm:truncate sm:text-3xl sm:tracking-tight">
+					Relatório de Entrevista
+				</h2>
+				<a href="/dashboard" class="text-sm font-semibold text-indigo-600 hover:text-indigo-900 dark:text-indigo-400">← Voltar ao Dashboard</a>
+			</div>
+
+			<div class="bg-white dark:bg-slate-800 shadow rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+				<h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Informações Gerais</h3>
+				<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+					<div>
+						<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Candidato</p>
+						<p class="text-base text-slate-900 dark:text-white font-semibold">{ data.Candidate.Name }</p>
+						<p class="text-xs text-slate-500 dark:text-slate-400">{ data.Candidate.Email }</p>
+					</div>
+					<div>
+						<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Vaga</p>
+						<p class="text-base text-slate-900 dark:text-white">{ data.Job.Title }</p>
+					</div>
+					<div>
+						<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Score IA</p>
+						if data.Session.Score != "" {
+							<p class="text-base font-bold text-indigo-600 dark:text-indigo-400">{ data.Session.Score }</p>
+						} else {
+							<p class="text-base text-slate-500 dark:text-slate-400">Não avaliado</p>
+						}
+					</div>
+					<div>
+						<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Duração</p>
+						<p class="text-base text-slate-900 dark:text-white">{ fmt.Sprintf("%d segundos", data.Session.DurationSeconds) }</p>
+					</div>
+				</div>
+			</div>
+
+			<div class="bg-white dark:bg-slate-800 shadow rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+				<h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Transcrição da Entrevista</h3>
+				if len(data.Turns) == 0 {
+					<p class="text-slate-500 dark:text-slate-400 text-sm italic">Nenhuma transcrição disponível para esta sessão.</p>
+				} else {
+					<div class="space-y-4 mt-4">
+						for _, turn := range data.Turns {
+							<div class={ "flex w-full", templ.KV("justify-start", turn.Role == domain.RoleAI), templ.KV("justify-end", turn.Role == domain.RoleCandidate) }>
+								<div class={ "max-w-[85%] rounded-lg p-4 shadow-sm", templ.KV("bg-indigo-50 dark:bg-indigo-500/10 text-slate-800 dark:text-slate-200 border border-indigo-100 dark:border-indigo-500/20", turn.Role == domain.RoleAI), templ.KV("bg-teal-50 dark:bg-teal-500/10 text-slate-800 dark:text-slate-200 border border-teal-100 dark:border-teal-500/20", turn.Role == domain.RoleCandidate) }>
+									<p class="text-xs font-semibold mb-1 opacity-70">
+										if turn.Role == domain.RoleAI {
+											Nova Voice AI
+										} else {
+											{ data.Candidate.Name }
+										}
+									</p>
+									<p class="text-sm whitespace-pre-wrap">{ turn.Content }</p>
+								</div>
+							</div>
+						}
+					</div>
+				}
+			</div>
+		</div>
+	}
+}

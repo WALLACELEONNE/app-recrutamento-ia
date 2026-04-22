@@ -78,6 +78,8 @@ func NewRouter(sessionHandler *handlers.SessionHandler, frontendHandler *handler
 			r.Get("/dashboard", frontendHandler.ServeDashboardPage)
 			r.Get("/dashboard/vagas", frontendHandler.ServeVagasPage)
 			r.Post("/dashboard/vagas", frontendHandler.HandleCreateVaga)
+			r.Post("/dashboard/candidatos/convidar", frontendHandler.HandleInviteCandidate)
+			r.Get("/dashboard/relatorios/{id}", frontendHandler.ServeReportPage)
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				http.Redirect(w, r, "/dashboard", http.StatusFound)
 			})

@@ -84,7 +84,7 @@ func DashboardHome(data domain.DashboardData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</p></dd></div></dl><!-- Tabela Recentes --> <div class=\"mt-10\"><div class=\"sm:flex sm:items-center\"><div class=\"sm:flex-auto\"><h3 class=\"text-base font-semibold leading-6 text-slate-900 dark:text-white\">Entrevistas Recentes</h3><p class=\"mt-2 text-sm text-slate-700 dark:text-slate-400\">Uma lista de todas as sessões recentes, incluindo o nome do candidato, vaga, status e score gerado pela IA.</p></div><div class=\"mt-4 sm:ml-16 sm:mt-0 sm:flex-none\"><button type=\"button\" class=\"btn-primary block\">Convidar Candidato</button></div></div><div class=\"mt-8 flow-root\"><div class=\"-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8\"><div class=\"inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8\"><div class=\"overflow-hidden shadow-sm ring-1 ring-slate-300 dark:ring-slate-700 ring-opacity-5 rounded-lg border border-slate-200 dark:border-slate-700\"><table class=\"min-w-full divide-y divide-slate-300 dark:divide-slate-700\"><thead class=\"bg-slate-50 dark:bg-slate-800\"><tr><th scope=\"col\" class=\"py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-200 sm:pl-6\">Candidato</th><th scope=\"col\" class=\"px-3 py-3.5 text-left text-sm font-semibold text-slate-900 dark:text-slate-200\">Vaga</th><th scope=\"col\" class=\"px-3 py-3.5 text-left text-sm font-semibold text-slate-900 dark:text-slate-200\">Status</th><th scope=\"col\" class=\"px-3 py-3.5 text-left text-sm font-semibold text-slate-900 dark:text-slate-200\">Score IA</th><th scope=\"col\" class=\"relative py-3.5 pl-3 pr-4 sm:pr-6\"><span class=\"sr-only\">Ações</span></th></tr></thead> <tbody class=\"divide-y divide-slate-200 dark:divide-slate-700 bg-white dark:bg-slate-900\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</p></dd></div></dl><!-- Tabela Recentes --> <div class=\"mt-10\"><div class=\"sm:flex sm:items-center\"><div class=\"sm:flex-auto\"><h3 class=\"text-base font-semibold leading-6 text-slate-900 dark:text-white\">Entrevistas Recentes</h3><p class=\"mt-2 text-sm text-slate-700 dark:text-slate-400\">Uma lista de todas as sessões recentes, incluindo o nome do candidato, vaga, status e score gerado pela IA.</p></div><div class=\"mt-4 sm:ml-16 sm:mt-0 sm:flex-none\"><button type=\"button\" class=\"btn-primary block\" onclick=\"document.getElementById('invite-candidate-modal').classList.remove('hidden')\">Convidar Candidato</button></div></div><div class=\"mt-8 flow-root\"><div class=\"-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8\"><div class=\"inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8\"><div class=\"overflow-hidden shadow-sm ring-1 ring-slate-300 dark:ring-slate-700 ring-opacity-5 rounded-lg border border-slate-200 dark:border-slate-700\"><table class=\"min-w-full divide-y divide-slate-300 dark:divide-slate-700\"><thead class=\"bg-slate-50 dark:bg-slate-800\"><tr><th scope=\"col\" class=\"py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-200 sm:pl-6\">Candidato</th><th scope=\"col\" class=\"px-3 py-3.5 text-left text-sm font-semibold text-slate-900 dark:text-slate-200\">Vaga</th><th scope=\"col\" class=\"px-3 py-3.5 text-left text-sm font-semibold text-slate-900 dark:text-slate-200\">Status</th><th scope=\"col\" class=\"px-3 py-3.5 text-left text-sm font-semibold text-slate-900 dark:text-slate-200\">Score IA</th><th scope=\"col\" class=\"relative py-3.5 pl-3 pr-4 sm:pr-6\"><span class=\"sr-only\">Ações</span></th></tr></thead> <tbody class=\"divide-y divide-slate-200 dark:divide-slate-700 bg-white dark:bg-slate-900\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -153,22 +153,89 @@ func DashboardHome(data domain.DashboardData) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				if interview.Status == domain.SessionStatusDone {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<a href=\"#\" class=\"text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300\">Ver Relatório</a>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<a href=\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var9 templ.SafeURL
+					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL("/dashboard/relatorios/" + interview.SessionID.String()))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/pages/dashboard.templ`, Line: 110, Col: 93}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" class=\"text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300\">Ver Relatório</a>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				} else if interview.Status == domain.SessionStatusInvited {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<button type=\"button\" @click=\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var10 string
+					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("navigator.clipboard.writeText(window.location.origin + '/interview/%s'); alert('Link copiado!')", interview.SessionID.String()))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/pages/dashboard.templ`, Line: 112, Col: 184}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\" class=\"text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300\">Copiar Link</button>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				} else {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<a href=\"#\" class=\"text-slate-400 dark:text-slate-500 cursor-not-allowed\">Ver Relatório</a>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<span class=\"text-slate-400 dark:text-slate-500 cursor-not-allowed\">Aguardando...</span>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</td></tr>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</td></tr>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</tbody></table></div></div></div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</tbody></table></div></div></div></div></div><!-- Modal for Invite Candidate --> <div id=\"invite-candidate-modal\" class=\"hidden relative z-10\" aria-labelledby=\"modal-title\" role=\"dialog\" aria-modal=\"true\"><div class=\"fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity dark:bg-slate-900 dark:bg-opacity-80\"></div><div class=\"fixed inset-0 z-10 w-screen overflow-y-auto\"><div class=\"flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0\"><div class=\"relative transform overflow-hidden rounded-lg bg-white dark:bg-slate-800 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6\"><div><div class=\"mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900\"><svg class=\"h-6 w-6 text-indigo-600 dark:text-indigo-400\" fill=\"none\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.66-1.546\"></path></svg></div><div class=\"mt-3 text-center sm:mt-5\"><h3 class=\"text-base font-semibold leading-6 text-slate-900 dark:text-white\" id=\"modal-title\">Convidar Candidato</h3><div class=\"mt-2\"><p class=\"text-sm text-slate-500 dark:text-slate-400\">Preencha os dados do candidato e selecione a vaga para gerar o link da entrevista por voz.</p></div></div></div><form action=\"/dashboard/candidatos/convidar\" method=\"POST\" class=\"mt-5 sm:mt-6\"><div class=\"space-y-4\"><div><label for=\"name\" class=\"block text-sm font-medium leading-6 text-slate-900 dark:text-slate-200\">Nome do Candidato</label><div class=\"mt-2\"><input type=\"text\" name=\"name\" id=\"name\" required class=\"block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-white dark:ring-slate-700 dark:focus:ring-indigo-500\" placeholder=\"Ex: João da Silva\"></div></div><div><label for=\"email\" class=\"block text-sm font-medium leading-6 text-slate-900 dark:text-slate-200\">E-mail</label><div class=\"mt-2\"><input type=\"email\" name=\"email\" id=\"email\" required class=\"block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-white dark:ring-slate-700 dark:focus:ring-indigo-500\" placeholder=\"Ex: joao@email.com\"></div></div><div><label for=\"job_id\" class=\"block text-sm font-medium leading-6 text-slate-900 dark:text-slate-200\">Vaga</label><div class=\"mt-2\"><select name=\"job_id\" id=\"job_id\" required class=\"block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-slate-900 dark:text-white dark:ring-slate-700 dark:focus:ring-indigo-500\"><option value=\"\" disabled selected>Selecione uma vaga</option> ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			for _, job := range data.AvailableJobs {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<option value=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var11 string
+				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(job.ID.String())
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/pages/dashboard.templ`, Line: 166, Col: 43}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var12 string
+				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(job.Title)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/pages/dashboard.templ`, Line: 166, Col: 57}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</option>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</select></div></div></div><div class=\"mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3\"><button type=\"submit\" class=\"inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2\">Convidar</button> <button type=\"button\" class=\"mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:col-start-1 sm:mt-0 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700 dark:hover:bg-slate-700\" onclick=\"document.getElementById('invite-candidate-modal').classList.add('hidden')\">Cancelar</button></div></form></div></div></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

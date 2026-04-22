@@ -80,6 +80,7 @@ type InterviewSession struct {
 	CandidateID     uuid.UUID     `json:"candidate_id"`
 	JobID           uuid.UUID     `json:"job_id"`
 	Status          SessionStatus `json:"status"`
+	Score           string        `json:"score,omitempty"`
 	StartedAt       *time.Time    `json:"started_at,omitempty"`
 	EndedAt         *time.Time    `json:"ended_at,omitempty"`
 	DurationSeconds int           `json:"duration_s,omitempty"`
@@ -107,16 +108,26 @@ type DashboardMetrics struct {
 
 // RecentInterview holds the data for the recent interviews table
 type RecentInterview struct {
+	SessionID     uuid.UUID
 	CandidateName string
 	JobTitle      string
 	Status        SessionStatus
 	Score         string
 }
 
+// ReportData holds the complete interview report for the HR view
+type ReportData struct {
+	Session   InterviewSession
+	Candidate Candidate
+	Job       Job
+	Turns     []SessionTurn
+}
+
 // DashboardData holds the view model for the dashboard page
 type DashboardData struct {
 	Metrics          DashboardMetrics
 	RecentInterviews []RecentInterview
+	AvailableJobs    []Job
 }
 
 // --- Interfaces for Clean Architecture ---
@@ -130,6 +141,8 @@ type SessionRepository interface {
 	GetRecentInterviews(ctx context.Context, limit int) ([]RecentInterview, error)
 	GetJobs(ctx context.Context) ([]Job, error)
 	CreateJob(ctx context.Context, job *Job) error
+	CreateCandidate(ctx context.Context, candidate *Candidate) error
+	GetSessionReport(ctx context.Context, sessionID uuid.UUID) (ReportData, error)
 }
 
 // TurnRepository defines the database operations for conversation turns.

@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -37,9 +39,15 @@ func (h *FrontendHandler) ServeDashboardPage(w http.ResponseWriter, r *http.Requ
 		interviews = []domain.RecentInterview{} // fallback or handle error
 	}
 
+	jobs, err := h.sessionRepo.GetJobs(ctx)
+	if err != nil {
+		jobs = []domain.Job{}
+	}
+
 	data := domain.DashboardData{
 		Metrics:          metrics,
 		RecentInterviews: interviews,
+		AvailableJobs:    jobs,
 	}
 
 	component := pages.DashboardHome(data)
@@ -75,17 +83,43 @@ func (h *FrontendHandler) HandleCreateVaga(w http.ResponseWriter, r *http.Reques
 
 	title := r.FormValue("title")
 	department := r.FormValue("department")
+	nQuestions, _ := strconv.Atoi(r.FormValue("n_questions"))
+	maxMinutes, _ := strconv.Atoi(r.FormValue("max_minutes"))
+	persona := r.FormValue("persona")
+	tone := r.FormValue("tone")
+
+	focusAreasStr := r.FormValue("focus_areas")
+	var focusAreas []string
+	if focusAreasStr != "" {
+		for _, area := range strings.Split(focusAreasStr, ",") {
+			focusAreas = append(focusAreas, strings.TrimSpace(area))
+		}
+	}
 
 	if title == "" || department == "" {
 		http.Error(w, "Title and department are required", http.StatusBadRequest)
 		return
 	}
 
+	if nQuestions == 0 {
+		nQuestions = 5
+	}
+	if maxMinutes == 0 {
+		maxMinutes = 15
+	}
+
 	job := &domain.Job{
 		ID:         uuid.New(),
 		Title:      title,
 		Department: department,
-		CreatedAt:  time.Now(),
+		InterviewConfig: domain.JobConfig{
+			NQuestions: nQuestions,
+			MaxMinutes: maxMinutes,
+			Persona:    persona,
+			Tone:       tone,
+			FocusAreas: focusAreas,
+		},
+		CreatedAt: time.Now(),
 	}
 
 	err = h.sessionRepo.CreateJob(r.Context(), job)
@@ -95,6 +129,81 @@ func (h *FrontendHandler) HandleCreateVaga(w http.ResponseWriter, r *http.Reques
 	}
 
 	http.Redirect(w, r, "/dashboard/vagas", http.StatusSeeOther)
+}
+
+// HandleInviteCandidate handles the creation of a new candidate and interview session
+func (h *FrontendHandler) HandleInviteCandidate(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		return
+	}
+
+	name := r.FormValue("name")
+	email := r.FormValue("email")
+	jobIDStr := r.FormValue("job_id")
+
+	if name == "" || email == "" || jobIDStr == "" {
+		http.Error(w, "Name, email and job are required", http.StatusBadRequest)
+		return
+	}
+
+	jobID, err := uuid.Parse(jobIDStr)
+	if err != nil {
+		http.Error(w, "Invalid job ID", http.StatusBadRequest)
+		return
+	}
+
+	candidate := &domain.Candidate{
+		ID:    uuid.New(),
+		Name:  name,
+		Email: email,
+		JobID: jobID,
+	}
+
+	err = h.sessionRepo.CreateCandidate(r.Context(), candidate)
+	if err != nil {
+		http.Error(w, "Failed to create candidate", http.StatusInternalServerError)
+		return
+	}
+
+	session := &domain.InterviewSession{
+		ID:          uuid.New(),
+		CandidateID: candidate.ID,
+		JobID:       jobID,
+		Status:      domain.SessionStatusInvited,
+	}
+
+	err = h.sessionRepo.Create(r.Context(), session)
+	if err != nil {
+		http.Error(w, "Failed to create session", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+}
+
+// ServeReportPage renders the detailed interview report
+func (h *FrontendHandler) ServeReportPage(w http.ResponseWriter, r *http.Request) {
+	sessionIDStr := chi.URLParam(r, "id")
+	sessionID, err := uuid.Parse(sessionIDStr)
+	if err != nil {
+		http.Error(w, "Invalid session ID", http.StatusBadRequest)
+		return
+	}
+
+	reportData, err := h.sessionRepo.GetSessionReport(r.Context(), sessionID)
+	if err != nil {
+		http.Error(w, "Failed to load report", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	component := pages.InterviewReport(reportData)
+	err = component.Render(r.Context(), w)
+	if err != nil {
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+	}
 }
 
 // ServeInterviewPage renders the interview UI for a candidate
