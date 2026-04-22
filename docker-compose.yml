@@ -19,6 +19,10 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: app_postgres
+    environment:
+      - TZ=America/Sao_Paulo
+      - LANG=en_US.utf8
+      - LC_ALL=en_US.utf8
     env_file:
       - .env.development
     ports:
@@ -41,6 +45,10 @@ services:
   redis:
     image: redis:7-alpine
     container_name: app_redis
+    environment:
+      - TZ=America/Sao_Paulo
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
@@ -148,6 +156,10 @@ services:
   nginx:
     image: nginx:alpine
     container_name: app_nginx
+    environment:
+      - TZ=America/Sao_Paulo
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
     ports:
       - "127.0.0.1:3000:80" # Expõe Nginx na porta 3000 do host
     volumes:

@@ -24,6 +24,11 @@ WORKDIR /app
 # Adiciona certificados SSL e fuso horário
 RUN apk --no-cache add ca-certificates tzdata
 
+# Configuração de Timezone (Horário de Brasília) e Encoding (UTF-8)
+ENV TZ=America/Sao_Paulo
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
 # Copia o binário compilado do estágio anterior
 COPY --from=builder /app/worker .
 
