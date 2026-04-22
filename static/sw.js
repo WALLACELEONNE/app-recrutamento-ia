@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nova-voice-v3';
+const CACHE_NAME = 'nova-voice-v4';
 const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json',
