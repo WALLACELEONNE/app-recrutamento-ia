@@ -45,6 +45,9 @@ func main() {
 	if err := repository.SeedAdmin(context.Background(), db.Pool); err != nil {
 		logger.Fatal("Admin seeding failed", zap.Error(err))
 	}
+	if err := repository.SeedDemoData(context.Background(), db.Pool); err != nil {
+		logger.Fatal("Demo data seeding failed", zap.Error(err))
+	}
 
 	sessionRepo := repository.NewSessionRepository(db)
 	sessionUC := usecase.NewSessionUseCase(sessionRepo)

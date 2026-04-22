@@ -112,3 +112,97 @@ func SeedAdmin(ctx context.Context, pool *pgxpool.Pool) error {
 	logger.Info("Default admin user seeded successfully", zap.String("email", adminEmail))
 	return nil
 }
+
+// SeedDemoData populates the database with some demo jobs, candidates, and interview sessions
+// This allows testing the UI without having to create everything from scratch
+func SeedDemoData(ctx context.Context, pool *pgxpool.Pool) error {
+	var jobCount int
+	err := pool.QueryRow(ctx, "SELECT COUNT(*) FROM jobs").Scan(&jobCount)
+	if err != nil {
+		return fmt.Errorf("failed to check jobs count: %w", err)
+	}
+
+	// Only seed if the database is empty
+	if jobCount > 0 {
+		logger.Info("Demo data already exists, skipping demo seeding")
+		return nil
+	}
+
+	logger.Info("Seeding demo data (Jobs, Candidates, and Sessions)...")
+
+	// 1. Create Jobs
+	job1ID := uuid.New()
+	job2ID := uuid.New()
+	now := time.Now()
+
+	job1Config := `{"n_questions": 5, "max_minutes": 15, "persona": "Tech Recruiter Senior", "tone": "profissional", "focus_areas": ["Golang", "Microservices", "AWS"]}`
+	job2Config := `{"n_questions": 3, "max_minutes": 10, "persona": "Data Lead", "tone": "tecnico", "focus_areas": ["Python", "SQL", "Airflow"]}`
+
+	_, err = pool.Exec(ctx, `
+		INSERT INTO jobs (id, title, department, interview_config, created_at)
+		VALUES 
+		($1, 'Desenvolvedor Golang Sênior', 'Engenharia', $3, $5),
+		($2, 'Engenheiro de Dados Pleno', 'Dados', $4, $5)
+	`, job1ID, job2ID, job1Config, job2Config, now)
+
+	if err != nil {
+		return fmt.Errorf("failed to seed demo jobs: %w", err)
+	}
+
+	// 2. Create Candidates
+	cand1ID := uuid.New()
+	cand2ID := uuid.New()
+	cand3ID := uuid.New()
+
+	_, err = pool.Exec(ctx, `
+		INSERT INTO candidates (id, name, email, job_id, created_at)
+		VALUES 
+		($1, 'Carlos Eduardo Silva', 'carlos.dev@example.com', $4, $7),
+		($2, 'Mariana Costa', 'mariana.data@example.com', $5, $7),
+		($3, 'João Pedro Santos', 'joao.go@example.com', $4, $7)
+	`, cand1ID, cand2ID, cand3ID, job1ID, job2ID, now)
+
+	if err != nil {
+		return fmt.Errorf("failed to seed demo candidates: %w", err)
+	}
+
+	// 3. Create Sessions
+	sess1ID := uuid.New()
+	sess2ID := uuid.New()
+	sess3ID := uuid.New()
+
+	startedSess1 := now.Add(-2 * time.Hour)
+	endedSess1 := startedSess1.Add(15 * time.Minute)
+
+	startedSess2 := now.Add(-30 * time.Minute)
+
+	_, err = pool.Exec(ctx, `
+		INSERT INTO interview_sessions (id, candidate_id, job_id, status, score, started_at, ended_at, duration_s)
+		VALUES 
+		($1, $4, $7, 'done', '8.5/10', $9, $10, 900),
+		($2, $5, $8, 'in_progress', null, $11, null, null),
+		($3, $6, $7, 'invited', null, null, null, null)
+	`, sess1ID, sess2ID, sess3ID, cand1ID, cand2ID, cand3ID, job1ID, job2ID, startedSess1, endedSess1, startedSess2)
+
+	if err != nil {
+		return fmt.Errorf("failed to seed demo sessions: %w", err)
+	}
+
+	// 4. Create Session Turns (Transcript) for the completed session
+	_, err = pool.Exec(ctx, `
+		INSERT INTO session_turns (session_id, role, content, turn_index, audio_offset_ms, duration_ms)
+		VALUES 
+		($1, 'ai', 'Olá Carlos, seja bem-vindo. Sou a Nova Voice AI e conduzirei sua entrevista para a vaga de Desenvolvedor Golang. Podemos começar?', 1, 0, 5000),
+		($1, 'candidate', 'Olá! Sim, podemos começar.', 2, 5500, 2000),
+		($1, 'ai', 'Ótimo! Me conte um pouco sobre sua experiência arquitetando microsserviços em Go e como você lida com comunicação assíncrona.', 3, 8000, 7000),
+		($1, 'candidate', 'Eu tenho 4 anos de experiência com Go. Costumo usar RabbitMQ ou Kafka para mensageria, e gRPC para comunicação síncrona entre serviços mais críticos.', 4, 16000, 12000),
+		($1, 'ai', 'Excelente. E como você lida com a idempotência no consumo dessas mensagens?', 5, 29000, 4000)
+	`, sess1ID)
+
+	if err != nil {
+		return fmt.Errorf("failed to seed demo turns: %w", err)
+	}
+
+	logger.Info("Demo data seeded successfully")
+	return nil
+}
