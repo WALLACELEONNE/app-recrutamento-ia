@@ -36,8 +36,8 @@ jobs:
       - name: Install Railway CLI
         run: npm i -g @railway/cli
 
-      - name: Deploy Server
-        run: railway up --service server --detach
+      - name: Deploy Server (Main Domain)
+        run: railway up --service app-recrutamento-ia --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
