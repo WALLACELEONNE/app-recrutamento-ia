@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/username/app-recrutamento-ia/internal/domain"
 	"github.com/username/app-recrutamento-ia/internal/infrastructure/livekit"
 	"github.com/username/app-recrutamento-ia/templates/pages"
 )
@@ -18,10 +19,32 @@ func NewFrontendHandler() *FrontendHandler {
 func (h *FrontendHandler) ServeDashboardPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	// Em um cenário real, aqui buscaríamos os dados de métricas do banco de dados
-	// para injetar no template. Por enquanto usamos a versão estática para design.
+	// TODO: Fetch real metrics from the database
+	data := domain.DashboardData{
+		Metrics: domain.DashboardMetrics{
+			TotalCandidates: 120,
+			ActiveSessions:  2,
+			DoneSessions:    118,
+		},
+		RecentInterviews: []domain.RecentInterview{
+			{CandidateName: "João Silva", JobTitle: "Desenvolvedor Go", Status: domain.SessionStatusDone, Score: "8.5/10"},
+			{CandidateName: "Maria Oliveira", JobTitle: "Engenheira de Dados", Status: domain.SessionStatusInProgress, Score: "-"},
+		},
+	}
 
-	component := pages.DashboardHome()
+	component := pages.DashboardHome(data)
+	err := component.Render(r.Context(), w)
+	if err != nil {
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+	}
+}
+
+// ServeVagasPage renders the jobs management dashboard page
+func (h *FrontendHandler) ServeVagasPage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Placeholder data for design
+	component := pages.VagasHome()
 	err := component.Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)

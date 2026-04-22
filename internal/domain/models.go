@@ -98,6 +98,27 @@ type SessionTurn struct {
 	DurationMs    int       `json:"duration_ms"`
 }
 
+// DashboardMetrics holds the aggregated data for the HR dashboard
+type DashboardMetrics struct {
+	TotalCandidates int
+	ActiveSessions  int
+	DoneSessions    int
+}
+
+// RecentInterview holds the data for the recent interviews table
+type RecentInterview struct {
+	CandidateName string
+	JobTitle      string
+	Status        SessionStatus
+	Score         string
+}
+
+// DashboardData holds the view model for the dashboard page
+type DashboardData struct {
+	Metrics          DashboardMetrics
+	RecentInterviews []RecentInterview
+}
+
 // --- Interfaces for Clean Architecture ---
 
 // SessionRepository defines the database operations for sessions.

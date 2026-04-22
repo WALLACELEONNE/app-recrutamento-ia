@@ -9,8 +9,10 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/username/app-recrutamento-ia/templates/layouts"
+import "github.com/username/app-recrutamento-ia/internal/domain"
+import "fmt"
 
-func DashboardHome() templ.Component {
+func DashboardHome(data domain.DashboardData) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -43,7 +45,130 @@ func DashboardHome() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div><h2 class=\"text-2xl font-bold leading-7 text-slate-900 sm:truncate sm:text-3xl sm:tracking-tight\">Visão Geral</h2><p class=\"mt-1 text-sm leading-6 text-slate-500\">Métricas recentes e sessões de entrevistas em andamento.</p></div><!-- Stats Grid --> <dl class=\"mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3\"><div class=\"relative overflow-hidden rounded-lg bg-white px-4 pb-12 pt-5 shadow-sm border border-slate-100 sm:px-6 sm:pt-6\"><dt><div class=\"absolute rounded-md bg-indigo-50 p-3\"><svg class=\"h-6 w-6 text-indigo-600\" fill=\"none\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"currentColor\" aria-hidden=\"true\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z\"></path></svg></div><p class=\"ml-16 truncate text-sm font-medium text-slate-500\">Total de Candidatos</p></dt><dd class=\"ml-16 flex items-baseline pb-6 sm:pb-7\"><p class=\"text-2xl font-semibold text-slate-900\">71</p><p class=\"ml-2 flex items-baseline text-sm font-semibold text-emerald-600\"><svg class=\"h-5 w-5 flex-shrink-0 self-center text-emerald-500\" viewBox=\"0 0 20 20\" fill=\"currentColor\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M10 17a.75.75 0 01-.75-.75V5.612L5.29 9.77a.75.75 0 01-1.08-1.04l5.25-5.5a.75.75 0 011.08 0l5.25 5.5a.75.75 0 11-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0110 17z\" clip-rule=\"evenodd\"></path></svg> <span class=\"sr-only\">Increased by </span> 12%</p></dd></div><div class=\"relative overflow-hidden rounded-lg bg-white px-4 pb-12 pt-5 shadow-sm border border-slate-100 sm:px-6 sm:pt-6\"><dt><div class=\"absolute rounded-md bg-teal-50 p-3\"><svg class=\"h-6 w-6 text-teal-600\" fill=\"none\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"currentColor\" aria-hidden=\"true\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg></div><p class=\"ml-16 truncate text-sm font-medium text-slate-500\">Entrevistas em Andamento</p></dt><dd class=\"ml-16 flex items-baseline pb-6 sm:pb-7\"><p class=\"text-2xl font-semibold text-slate-900\">4</p></dd></div><div class=\"relative overflow-hidden rounded-lg bg-white px-4 pb-12 pt-5 shadow-sm border border-slate-100 sm:px-6 sm:pt-6\"><dt><div class=\"absolute rounded-md bg-indigo-50 p-3\"><svg class=\"h-6 w-6 text-indigo-600\" fill=\"none\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"currentColor\" aria-hidden=\"true\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg></div><p class=\"ml-16 truncate text-sm font-medium text-slate-500\">Entrevistas Concluídas</p></dt><dd class=\"ml-16 flex items-baseline pb-6 sm:pb-7\"><p class=\"text-2xl font-semibold text-slate-900\">58</p></dd></div></dl><!-- Tabela Recentes --> <div class=\"mt-10\"><div class=\"sm:flex sm:items-center\"><div class=\"sm:flex-auto\"><h3 class=\"text-base font-semibold leading-6 text-slate-900\">Entrevistas Recentes</h3><p class=\"mt-2 text-sm text-slate-700\">Uma lista de todas as sessões recentes, incluindo o nome do candidato, vaga, status e score gerado pela IA.</p></div><div class=\"mt-4 sm:ml-16 sm:mt-0 sm:flex-none\"><button type=\"button\" class=\"btn-primary block\">Convidar Candidato</button></div></div><div class=\"mt-8 flow-root\"><div class=\"-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8\"><div class=\"inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8\"><div class=\"overflow-hidden shadow-sm ring-1 ring-slate-300 ring-opacity-5 rounded-lg border border-slate-200\"><table class=\"min-w-full divide-y divide-slate-300\"><thead class=\"bg-slate-50\"><tr><th scope=\"col\" class=\"py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-900 sm:pl-6\">Candidato</th><th scope=\"col\" class=\"px-3 py-3.5 text-left text-sm font-semibold text-slate-900\">Vaga</th><th scope=\"col\" class=\"px-3 py-3.5 text-left text-sm font-semibold text-slate-900\">Status</th><th scope=\"col\" class=\"px-3 py-3.5 text-left text-sm font-semibold text-slate-900\">Score IA</th><th scope=\"col\" class=\"relative py-3.5 pl-3 pr-4 sm:pr-6\"><span class=\"sr-only\">Ações</span></th></tr></thead> <tbody class=\"divide-y divide-slate-200 bg-white\"><tr><td class=\"whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-slate-900 sm:pl-6\">João Silva</td><td class=\"whitespace-nowrap px-3 py-4 text-sm text-slate-500\">Desenvolvedor Go Senior</td><td class=\"whitespace-nowrap px-3 py-4 text-sm text-slate-500\"><span class=\"inline-flex items-center rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20\">Concluído</span></td><td class=\"whitespace-nowrap px-3 py-4 text-sm text-slate-500\">8.5/10</td><td class=\"relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6\"><a href=\"#\" class=\"text-indigo-600 hover:text-indigo-900\">Ver Relatório</a></td></tr><tr><td class=\"whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-slate-900 sm:pl-6\">Maria Oliveira</td><td class=\"whitespace-nowrap px-3 py-4 text-sm text-slate-500\">Engenheira de Dados</td><td class=\"whitespace-nowrap px-3 py-4 text-sm text-slate-500\"><span class=\"inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20\">Em Andamento</span></td><td class=\"whitespace-nowrap px-3 py-4 text-sm text-slate-500\">-</td><td class=\"relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6\"><a href=\"#\" class=\"text-slate-400 cursor-not-allowed\">Ver Relatório</a></td></tr><tr><td class=\"whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-slate-900 sm:pl-6\">Carlos Santos</td><td class=\"whitespace-nowrap px-3 py-4 text-sm text-slate-500\">Analista de Suporte</td><td class=\"whitespace-nowrap px-3 py-4 text-sm text-slate-500\"><span class=\"inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-600/20\">Convidado</span></td><td class=\"whitespace-nowrap px-3 py-4 text-sm text-slate-500\">-</td><td class=\"relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6\"><a href=\"#\" class=\"text-slate-400 cursor-not-allowed\">Ver Relatório</a></td></tr></tbody></table></div></div></div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div><h2 class=\"text-2xl font-bold leading-7 text-slate-900 dark:text-white sm:truncate sm:text-3xl sm:tracking-tight\">Visão Geral</h2><p class=\"mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400\">Métricas recentes e sessões de entrevistas em andamento.</p></div><!-- Stats Grid --> <dl class=\"mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3\"><div class=\"relative overflow-hidden rounded-lg bg-white dark:bg-slate-800 px-4 pb-12 pt-5 shadow-sm border border-slate-100 dark:border-slate-700 sm:px-6 sm:pt-6\"><dt><div class=\"absolute rounded-md bg-indigo-50 dark:bg-indigo-500/10 p-3\"><svg class=\"h-6 w-6 text-indigo-600 dark:text-indigo-400\" fill=\"none\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"currentColor\" aria-hidden=\"true\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z\"></path></svg></div><p class=\"ml-16 truncate text-sm font-medium text-slate-500 dark:text-slate-400\">Total de Candidatos</p></dt><dd class=\"ml-16 flex items-baseline pb-6 sm:pb-7\"><p class=\"text-2xl font-semibold text-slate-900 dark:text-white\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var3 string
+			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", data.Metrics.TotalCandidates))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/pages/dashboard.templ`, Line: 30, Col: 118}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</p></dd></div><div class=\"relative overflow-hidden rounded-lg bg-white dark:bg-slate-800 px-4 pb-12 pt-5 shadow-sm border border-slate-100 dark:border-slate-700 sm:px-6 sm:pt-6\"><dt><div class=\"absolute rounded-md bg-teal-50 dark:bg-teal-500/10 p-3\"><svg class=\"h-6 w-6 text-teal-600 dark:text-teal-400\" fill=\"none\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"currentColor\" aria-hidden=\"true\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg></div><p class=\"ml-16 truncate text-sm font-medium text-slate-500 dark:text-slate-400\">Entrevistas em Andamento</p></dt><dd class=\"ml-16 flex items-baseline pb-6 sm:pb-7\"><p class=\"text-2xl font-semibold text-slate-900 dark:text-white\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var4 string
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", data.Metrics.ActiveSessions))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/pages/dashboard.templ`, Line: 44, Col: 117}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</p></dd></div><div class=\"relative overflow-hidden rounded-lg bg-white dark:bg-slate-800 px-4 pb-12 pt-5 shadow-sm border border-slate-100 dark:border-slate-700 sm:px-6 sm:pt-6\"><dt><div class=\"absolute rounded-md bg-indigo-50 dark:bg-indigo-500/10 p-3\"><svg class=\"h-6 w-6 text-indigo-600 dark:text-indigo-400\" fill=\"none\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"currentColor\" aria-hidden=\"true\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg></div><p class=\"ml-16 truncate text-sm font-medium text-slate-500 dark:text-slate-400\">Entrevistas Concluídas</p></dt><dd class=\"ml-16 flex items-baseline pb-6 sm:pb-7\"><p class=\"text-2xl font-semibold text-slate-900 dark:text-white\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var5 string
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", data.Metrics.DoneSessions))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/pages/dashboard.templ`, Line: 58, Col: 115}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</p></dd></div></dl><!-- Tabela Recentes --> <div class=\"mt-10\"><div class=\"sm:flex sm:items-center\"><div class=\"sm:flex-auto\"><h3 class=\"text-base font-semibold leading-6 text-slate-900 dark:text-white\">Entrevistas Recentes</h3><p class=\"mt-2 text-sm text-slate-700 dark:text-slate-400\">Uma lista de todas as sessões recentes, incluindo o nome do candidato, vaga, status e score gerado pela IA.</p></div><div class=\"mt-4 sm:ml-16 sm:mt-0 sm:flex-none\"><button type=\"button\" class=\"btn-primary block\">Convidar Candidato</button></div></div><div class=\"mt-8 flow-root\"><div class=\"-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8\"><div class=\"inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8\"><div class=\"overflow-hidden shadow-sm ring-1 ring-slate-300 dark:ring-slate-700 ring-opacity-5 rounded-lg border border-slate-200 dark:border-slate-700\"><table class=\"min-w-full divide-y divide-slate-300 dark:divide-slate-700\"><thead class=\"bg-slate-50 dark:bg-slate-800\"><tr><th scope=\"col\" class=\"py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-200 sm:pl-6\">Candidato</th><th scope=\"col\" class=\"px-3 py-3.5 text-left text-sm font-semibold text-slate-900 dark:text-slate-200\">Vaga</th><th scope=\"col\" class=\"px-3 py-3.5 text-left text-sm font-semibold text-slate-900 dark:text-slate-200\">Status</th><th scope=\"col\" class=\"px-3 py-3.5 text-left text-sm font-semibold text-slate-900 dark:text-slate-200\">Score IA</th><th scope=\"col\" class=\"relative py-3.5 pl-3 pr-4 sm:pr-6\"><span class=\"sr-only\">Ações</span></th></tr></thead> <tbody class=\"divide-y divide-slate-200 dark:divide-slate-700 bg-white dark:bg-slate-900\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			for _, interview := range data.RecentInterviews {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<tr><td class=\"whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-slate-900 dark:text-slate-100 sm:pl-6\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var6 string
+				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(interview.CandidateName)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/pages/dashboard.templ`, Line: 96, Col: 144}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</td><td class=\"whitespace-nowrap px-3 py-4 text-sm text-slate-500 dark:text-slate-400\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var7 string
+				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(interview.JobTitle)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/pages/dashboard.templ`, Line: 97, Col: 114}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</td><td class=\"whitespace-nowrap px-3 py-4 text-sm text-slate-500 dark:text-slate-400\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				if interview.Status == domain.SessionStatusDone {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<span class=\"inline-flex items-center rounded-md bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 ring-1 ring-inset ring-emerald-600/20 dark:ring-emerald-500/20\">Concluído</span>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				} else if interview.Status == domain.SessionStatusInProgress {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<span class=\"inline-flex items-center rounded-md bg-amber-50 dark:bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-700 dark:text-amber-400 ring-1 ring-inset ring-amber-600/20 dark:ring-amber-500/20\">Em Andamento</span>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				} else {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<span class=\"inline-flex items-center rounded-md bg-indigo-50 dark:bg-indigo-500/10 px-2 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-400 ring-1 ring-inset ring-indigo-600/20 dark:ring-indigo-500/20\">Convidado</span>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</td><td class=\"whitespace-nowrap px-3 py-4 text-sm text-slate-500 dark:text-slate-400\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var8 string
+				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(interview.Score)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/pages/dashboard.templ`, Line: 107, Col: 111}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</td><td class=\"relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				if interview.Status == domain.SessionStatusDone {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<a href=\"#\" class=\"text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300\">Ver Relatório</a>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				} else {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<a href=\"#\" class=\"text-slate-400 dark:text-slate-500 cursor-not-allowed\">Ver Relatório</a>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</td></tr>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</tbody></table></div></div></div></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
