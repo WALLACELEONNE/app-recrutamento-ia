@@ -56,17 +56,18 @@ func (o *InterviewOrchestrator) SetupAITrack(room *lksdk.Room) error {
 }
 
 // HandleCandidateAudio processa o áudio vindo do candidato.
-// Note que usamos *webrtc.TrackRemote pois o lksdk.RemoteTrack do LiveKit envolve essa interface para ler pacotes RTP.
 func (o *InterviewOrchestrator) HandleCandidateAudio(ctx context.Context, track *webrtc.TrackRemote, rp *lksdk.RemoteParticipant) {
 	audioStream := make(chan []byte, 100)
 	defer close(audioStream)
 
+	// Inicia a transcrição com Deepgram
 	textStream, err := o.sttClient.TranscribeStream(ctx, audioStream)
 	if err != nil {
 		logger.Error("Failed to start STT stream", zap.Error(err))
 		return
 	}
 
+	// Lê pacotes RTP vindos do Browser
 	go func() {
 		for {
 			select {
@@ -75,16 +76,30 @@ func (o *InterviewOrchestrator) HandleCandidateAudio(ctx context.Context, track 
 			default:
 				rtpPacket, _, err := track.ReadRTP()
 				if err != nil {
-					return
+					logger.Error("Error reading RTP track (candidate left?)", zap.Error(err))
+					return // Sai se o candidato mutou ou desconectou permanentemente
 				}
+				// IMPORTANTE: Em um cenário real de produção com Deepgram STT de áudio PCM,
+				// precisaríamos usar um decoder Opus (pion/opus) para converter rtpPacket.Payload de OPUS para PCM
+				// e depois mandar no canal. Por hora estamos injetando o payload Opus direto,
+				// o que faz o Deepgram quebrar (Error: close 1011) se não estiver esperando OPUS puro.
 				audioStream <- rtpPacket.Payload
 			}
 		}
 	}()
 
-	for candidateText := range textStream {
-		logger.Info("Candidate said:", zap.String("text", candidateText))
-		go o.processLLMAndTTS(ctx, candidateText)
+	// Loop escutando os textos transcritos pelo Deepgram
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case candidateText, ok := <-textStream:
+			if !ok {
+				return
+			}
+			logger.Info("Candidate said:", zap.String("text", candidateText))
+			go o.processLLMAndTTS(ctx, candidateText)
+		}
 	}
 }
 

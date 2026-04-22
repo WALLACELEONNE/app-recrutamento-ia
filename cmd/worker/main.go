@@ -86,6 +86,7 @@ func main() {
 				OnTrackSubscribed: func(track *webrtc.TrackRemote, pub *lksdk.RemoteTrackPublication, rp *lksdk.RemoteParticipant) {
 					zlog.Info("Track Subscribed", zap.String("track_id", track.ID()))
 					if track.Kind() == webrtc.RTPCodecTypeAudio {
+						// IMPORTANTE: precisamos aguardar ou capturar o payload em background de maneira resiliente
 						go orchestrator.HandleCandidateAudio(context.Background(), track, rp)
 					}
 				},
@@ -93,11 +94,14 @@ func main() {
 			OnParticipantConnected: func(p *lksdk.RemoteParticipant) {
 				log.Printf("Participante conectado na sala %s: %s", roomName, p.Identity())
 			},
+			OnDisconnected: func() {
+				log.Printf("Worker desconectado da sala %s", roomName)
+			},
 		})
 
 		if err != nil {
 			zlog.Error("Falha ao conectar ao LiveKit", zap.Error(err))
-			return err
+			return nil // Retornar nil para o redisQueue.Listen tentar continuar lendo (ou tratar de acordo)
 		}
 
 		err = orchestrator.SetupAITrack(room)
