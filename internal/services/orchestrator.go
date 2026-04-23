@@ -38,7 +38,7 @@ func (o *InterviewOrchestrator) SetupAITrack(room *lksdk.Room) error {
 	capability := webrtc.RTPCodecCapability{
 		MimeType:  webrtc.MimeTypeOpus,
 		ClockRate: 48000,
-		Channels:  1,
+		Channels:  2,
 	}
 
 	track, err := lksdk.NewLocalSampleTrack(capability)
