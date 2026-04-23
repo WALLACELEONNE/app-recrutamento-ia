@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nova-voice-v7';
+const CACHE_NAME = 'nova-voice-v8';
 const ASSETS_TO_CACHE = [
   '/manifest.json',
   '/static/css/styles.css',

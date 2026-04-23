@@ -5,12 +5,14 @@ document.addEventListener('alpine:init', () => {
         // Proxies break complex WebRTC objects like LivekitClient.Room causing DataCloneError
         let room = null;
         let audioElement = null;
+        let aiTrackTimeoutId = null;
 
         return {
             interviewStarted: false,
             isConnected: false,
             isMuted: true,
             isSpeaking: false,
+            hasAiTrack: false,
             aiStatus: 'idle', // 'idle', 'listening', 'processing', 'speaking'
             aiStatusText: 'Aguardando início da sessão',
             candidateInstruction: 'Clique em "Iniciar Entrevista" e permita o acesso ao microfone.',
@@ -33,6 +35,7 @@ document.addEventListener('alpine:init', () => {
                 // Create a hidden audio element to play the AI voice AFTER user interaction
                 audioElement = document.createElement('audio');
                 audioElement.autoplay = true;
+                audioElement.playsInline = true;
                 document.body.appendChild(audioElement);
 
                 await this.connectToLiveKit();
@@ -51,7 +54,8 @@ document.addEventListener('alpine:init', () => {
                     // Listeners for Room Events
                     room.on(LivekitClient.RoomEvent.Connected, () => {
                         this.isConnected = true;
-                        this.candidateInstruction = 'Conectado. A IA iniciará a conversa em instantes...';
+                        this.hasAiTrack = false;
+                        this.candidateInstruction = 'Conectado. Aguardando a IA entrar na sala...';
                         this.setAiStatus('idle', 'A Inteligência Artificial está aguardando você falar.');
                         this.startTimer();
                         
@@ -65,13 +69,24 @@ document.addEventListener('alpine:init', () => {
                             console.error('Falha ao habilitar microfone automaticamente', e);
                             this.candidateInstruction = 'Por favor, clique em "Microfone Mutado" para habilitar o áudio.';
                         });
+
+                        clearTimeout(aiTrackTimeoutId);
+                        aiTrackTimeoutId = setTimeout(() => {
+                            if (!this.hasAiTrack) {
+                                console.error('AI worker did not publish an audio track in time');
+                                this.candidateInstruction = 'A IA nao entrou na sala a tempo. Recarregue a pagina para reenfileirar o worker.';
+                                this.setAiStatus('idle', 'A IA nao ficou disponivel.');
+                            }
+                        }, 12000);
                     });
 
                     room.on(LivekitClient.RoomEvent.Disconnected, () => {
                         this.isConnected = false;
+                        this.hasAiTrack = false;
                         this.candidateInstruction = 'Conexão encerrada.';
                         this.setAiStatus('idle', 'Sessão encerrada.');
                         this.stopTimer();
+                        clearTimeout(aiTrackTimeoutId);
                     });
 
                     room.on(LivekitClient.RoomEvent.ActiveSpeakersChanged, (speakers) => {
@@ -102,7 +117,13 @@ document.addEventListener('alpine:init', () => {
                     room.on(LivekitClient.RoomEvent.TrackSubscribed, (track, publication, participant) => {
                         if (track.kind === LivekitClient.Track.Kind.Audio) {
                             console.log('AI Audio Track subscribed');
+                            this.hasAiTrack = true;
+                            clearTimeout(aiTrackTimeoutId);
                             track.attach(audioElement);
+                            audioElement.play().catch((error) => {
+                                console.error('Failed to play AI audio track', error);
+                            });
+                            this.candidateInstruction = 'IA conectada. A entrevista comecara automaticamente.';
                             
                             // Fake state transitions based on track activity (in reality, driven by DataChannels or AudioAnalyzer)
                             this.setAiStatus('speaking', 'A Inteligência Artificial está falando.');
@@ -135,8 +156,8 @@ document.addEventListener('alpine:init', () => {
                     await room.connect(wsUrl, token);
                     
                     this.isConnected = true;
-                    this.candidateInstruction = 'Entrevista Pronta. Clique no microfone para começar.';
-                    this.setAiStatus('listening', 'A IA está pronta e ouvindo.');
+                    this.candidateInstruction = 'Conectado ao LiveKit. Aguardando a presenca da IA...';
+                    this.setAiStatus('idle', 'Conectado. Aguardando a IA entrar na sala.');
 
                 } catch (error) {
                     console.error('Failed to connect to LiveKit', error);
@@ -172,7 +193,9 @@ document.addEventListener('alpine:init', () => {
                     if (room) {
                         room.disconnect();
                     }
+                    clearTimeout(aiTrackTimeoutId);
                     this.isConnected = false;
+                    this.hasAiTrack = false;
                     this.candidateInstruction = 'Entrevista encerrada com sucesso. Obrigado!';
                     this.setAiStatus('idle', 'Entrevista finalizada.');
                     

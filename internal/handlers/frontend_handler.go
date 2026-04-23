@@ -12,7 +12,9 @@ import (
 	"github.com/username/app-recrutamento-ia/internal/domain"
 	"github.com/username/app-recrutamento-ia/internal/infrastructure/livekit"
 	"github.com/username/app-recrutamento-ia/internal/infrastructure/queue"
+	"github.com/username/app-recrutamento-ia/internal/logger"
 	"github.com/username/app-recrutamento-ia/templates/pages"
+	"go.uber.org/zap"
 )
 
 type FrontendHandler struct {
@@ -263,10 +265,18 @@ func (h *FrontendHandler) ServeInterviewPage(w http.ResponseWriter, r *http.Requ
 		redisURL = "127.0.0.1:6379"
 	}
 	redisQ, err := queue.NewRedisQueue(redisURL, "interview_jobs")
-	if err == nil {
-		defer redisQ.Close()
-		jobData := map[string]string{"room_name": "room-" + sessionID}
-		_ = redisQ.Enqueue(r.Context(), jobData)
+	if err != nil {
+		logger.Error("Failed to connect to Redis to trigger AI worker", zap.Error(err), zap.String("session_id", sessionID))
+		http.Error(w, "AI worker indisponivel no momento", http.StatusServiceUnavailable)
+		return
+	}
+	defer redisQ.Close()
+
+	jobData := map[string]string{"room_name": "room-" + sessionID}
+	if err := redisQ.Enqueue(r.Context(), jobData); err != nil {
+		logger.Error("Failed to enqueue AI worker job", zap.Error(err), zap.String("session_id", sessionID))
+		http.Error(w, "Nao foi possivel iniciar a IA da entrevista", http.StatusServiceUnavailable)
+		return
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

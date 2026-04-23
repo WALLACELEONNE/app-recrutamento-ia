@@ -61,6 +61,8 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	var activeRooms sync.Map
+
 	go redisQueue.Listen(ctx, func(ctx context.Context, jobData []byte) error {
 		var job map[string]string
 		if err := json.Unmarshal(jobData, &job); err != nil {
@@ -69,6 +71,11 @@ func main() {
 
 		roomName := job["room_name"]
 		if roomName == "" {
+			return nil
+		}
+
+		if _, alreadyActive := activeRooms.Load(roomName); alreadyActive {
+			zlog.Info("AI Worker já está ativo para a sala, ignorando job duplicado", zap.String("room_name", roomName))
 			return nil
 		}
 
@@ -106,6 +113,7 @@ func main() {
 				log.Printf("Participante conectado na sala %s: %s", roomName, p.Identity())
 			},
 			OnDisconnected: func() {
+				activeRooms.Delete(roomName)
 				log.Printf("Worker desconectado da sala %s", roomName)
 			},
 		})
@@ -121,6 +129,8 @@ func main() {
 			room.Disconnect()
 			return err
 		}
+
+		activeRooms.Store(roomName, room)
 
 		// Removemos a chamada imediata do Introduce daqui.
 		// Ela será disparada quando o candidato se conectar e publicar a trilha de áudio.
