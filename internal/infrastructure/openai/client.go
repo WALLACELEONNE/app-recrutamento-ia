@@ -14,6 +14,114 @@ import (
 	"go.uber.org/zap"
 )
 
+// TTSClient implementa a interface domain.TTSClient usando a API da OpenAI.
+type TTSClient struct {
+	client *openai.Client
+	voice  openai.SpeechVoice
+}
+
+// NewTTSClient cria uma nova instância do TTSClient com a chave da OpenAI.
+func NewTTSClient(apiKey string, voice string) (*TTSClient, error) {
+	if apiKey == "" {
+		return nil, errors.New("openai API key is required")
+	}
+
+	v := openai.VoiceAlloy
+	if voice != "" {
+		v = openai.SpeechVoice(voice)
+	}
+
+	return &TTSClient{
+		client: openai.NewClient(apiKey),
+		voice:  v,
+	}, nil
+}
+
+func isPunctuation(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+	lastChar := s[len(s)-1]
+	return lastChar == '.' || lastChar == '?' || lastChar == '!' || lastChar == '\n'
+}
+
+// SynthesizeStream consome texto do LLM (streaming) e gera áudio via OpenAI API.
+func (c *TTSClient) SynthesizeStream(ctx context.Context, textStream <-chan string) (<-chan []byte, error) {
+	outStream := make(chan []byte, 100)
+
+	go func() {
+		defer close(outStream)
+		var sentenceBuffer string
+
+		for {
+			select {
+			case <-ctx.Done():
+				logger.Info("TTS SynthesizeStream context canceled")
+				return
+			case textToken, ok := <-textStream:
+				if !ok {
+					if len(sentenceBuffer) > 0 {
+						c.synthesizeAndSend(ctx, sentenceBuffer, outStream)
+					}
+					return
+				}
+
+				sentenceBuffer += textToken
+
+				if isPunctuation(textToken) && len(sentenceBuffer) > 10 {
+					textToSynthesize := sentenceBuffer
+					sentenceBuffer = ""
+					c.synthesizeAndSend(ctx, textToSynthesize, outStream)
+				}
+			}
+		}
+	}()
+
+	return outStream, nil
+}
+
+func (c *TTSClient) synthesizeAndSend(ctx context.Context, text string, outStream chan<- []byte) {
+	logger.Debug("Synthesizing TTS chunk", zap.String("text", text))
+
+	var audioBytes []byte
+	req := openai.CreateSpeechRequest{
+		Model:          openai.TTSModel1,
+		Voice:          c.voice,
+		Input:          text,
+		ResponseFormat: openai.SpeechResponseFormatOpus,
+	}
+
+	err := retry.Do(
+		func() error {
+			resp, err := c.client.CreateSpeech(ctx, req)
+			if err != nil {
+				logger.Warn("OpenAI TTS request failed, retrying...", zap.Error(err), zap.String("text", text))
+				return err
+			}
+			defer resp.Close()
+
+			audioBytes, err = io.ReadAll(resp)
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+		retry.Attempts(3),
+		retry.Delay(500*time.Millisecond),
+		retry.MaxDelay(2*time.Second),
+		retry.Context(ctx),
+	)
+
+	if err != nil {
+		logger.Error("Failed to synthesize text after retries", zap.Error(err), zap.String("text", text))
+		return
+	}
+
+	if len(audioBytes) > 0 {
+		outStream <- audioBytes
+	}
+}
+
 // LLMClient implementa a interface domain.LLMClient usando OpenAI.
 type LLMClient struct {
 	client *openai.Client

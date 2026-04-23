@@ -1,13 +1,16 @@
 package services
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"time"
 
 	"github.com/livekit/protocol/livekit"
 	lksdk "github.com/livekit/server-sdk-go/v2"
 	"github.com/pion/webrtc/v4"
 	"github.com/pion/webrtc/v4/pkg/media"
+	"github.com/pion/webrtc/v4/pkg/media/oggreader"
 	"github.com/username/app-recrutamento-ia/internal/domain"
 	"github.com/username/app-recrutamento-ia/internal/logger"
 	"go.uber.org/zap"
@@ -78,13 +81,38 @@ func (o *InterviewOrchestrator) Introduce(ctx context.Context, jobTitle string) 
 	}
 
 	for audioChunk := range audioBytesStream {
-		err = o.aiTrack.WriteSample(media.Sample{
-			Data:     audioChunk,
-			Duration: 20 * time.Millisecond,
-		}, nil)
-
+		// audioChunk is an OGG file (OpenAI TTS "opus" format)
+		ogg, _, err := oggreader.NewWith(bytes.NewReader(audioChunk))
 		if err != nil {
-			logger.Error("Error writing intro sample", zap.Error(err))
+			logger.Error("Failed to read OGG", zap.Error(err))
+			continue
+		}
+
+		// Read and send Opus payloads to the track
+		var lastGranule uint64
+		for {
+			pageData, pageHeader, err := ogg.ParseNextPage()
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				logger.Error("Failed to parse OGG page", zap.Error(err))
+				break
+			}
+
+			// The amount of samples is the difference in granules
+			sampleCount := float64(pageHeader.GranulePosition - lastGranule)
+			lastGranule = pageHeader.GranulePosition
+			sampleDuration := time.Duration((sampleCount/48000.0)*1000) * time.Millisecond
+
+			err = o.aiTrack.WriteSample(media.Sample{
+				Data:     pageData,
+				Duration: sampleDuration,
+			}, nil)
+
+			if err != nil {
+				logger.Error("Error writing intro sample", zap.Error(err))
+			}
 		}
 	}
 }
@@ -154,13 +182,35 @@ func (o *InterviewOrchestrator) processLLMAndTTS(ctx context.Context, candidateT
 	}
 
 	for audioChunk := range audioBytesStream {
-		err = o.aiTrack.WriteSample(media.Sample{
-			Data:     audioChunk,
-			Duration: 20 * time.Millisecond,
-		}, nil)
-
+		ogg, _, err := oggreader.NewWith(bytes.NewReader(audioChunk))
 		if err != nil {
-			logger.Error("Error writing sample to AI track", zap.Error(err))
+			logger.Error("Failed to read OGG", zap.Error(err))
+			continue
+		}
+
+		var lastGranule uint64
+		for {
+			pageData, pageHeader, err := ogg.ParseNextPage()
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				logger.Error("Failed to parse OGG page", zap.Error(err))
+				break
+			}
+
+			sampleCount := float64(pageHeader.GranulePosition - lastGranule)
+			lastGranule = pageHeader.GranulePosition
+			sampleDuration := time.Duration((sampleCount/48000.0)*1000) * time.Millisecond
+
+			err = o.aiTrack.WriteSample(media.Sample{
+				Data:     pageData,
+				Duration: sampleDuration,
+			}, nil)
+
+			if err != nil {
+				logger.Error("Error writing sample to AI track", zap.Error(err))
+			}
 		}
 	}
 }

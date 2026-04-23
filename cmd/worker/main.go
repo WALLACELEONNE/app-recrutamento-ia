@@ -13,7 +13,6 @@ import (
 	"github.com/pion/webrtc/v4"
 
 	"github.com/username/app-recrutamento-ia/internal/infrastructure/deepgram"
-	"github.com/username/app-recrutamento-ia/internal/infrastructure/elevenlabs"
 	"github.com/username/app-recrutamento-ia/internal/infrastructure/openai"
 	"github.com/username/app-recrutamento-ia/internal/infrastructure/queue"
 	zlog "github.com/username/app-recrutamento-ia/internal/logger"
@@ -41,9 +40,9 @@ func main() {
 		zlog.Fatal("Failed to init LLM")
 	}
 
-	ttsClient, err := elevenlabs.NewTTSClient(
-		getEnvOrDefault("ELEVENLABS_API_KEY", "dummy"),
-		getEnvOrDefault("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM"), // Default to Rachel if not provided
+	ttsClient, err := openai.NewTTSClient(
+		getEnvOrDefault("OPENAI_API_KEY", "dummy"),
+		"nova", // Voice Nova
 	)
 	if err != nil {
 		zlog.Fatal("Failed to init TTS")
