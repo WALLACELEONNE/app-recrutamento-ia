@@ -25,15 +25,16 @@ document.addEventListener('alpine:init', () => {
 
             async init() {
                 console.log('Nova Voice AI Player Initialized');
-                
-                // Create a hidden audio element to play the AI voice
-                audioElement = document.createElement('audio');
-                audioElement.autoplay = true;
-                document.body.appendChild(audioElement);
             },
 
             async startInterview() {
                 this.interviewStarted = true;
+                
+                // Create a hidden audio element to play the AI voice AFTER user interaction
+                audioElement = document.createElement('audio');
+                audioElement.autoplay = true;
+                document.body.appendChild(audioElement);
+
                 await this.connectToLiveKit();
             },
 
@@ -53,6 +54,9 @@ document.addEventListener('alpine:init', () => {
                         this.candidateInstruction = 'Conectado. A IA iniciará a conversa em instantes...';
                         this.setAiStatus('idle', 'A Inteligência Artificial está aguardando você falar.');
                         this.startTimer();
+                        
+                        // Garante que o contexto de áudio do navegador foi liberado
+                        room.startAudio().catch(console.error);
                         
                         // Habilita o microfone automaticamente para disparar a introdução da IA
                         room.localParticipant.setMicrophoneEnabled(true).then(() => {
