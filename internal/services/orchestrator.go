@@ -113,6 +113,9 @@ func (o *InterviewOrchestrator) Introduce(ctx context.Context, jobTitle string) 
 			if err != nil {
 				logger.Error("Error writing intro sample", zap.Error(err))
 			}
+
+			// Pacing the audio output so we don't overflow the RTP stack
+			time.Sleep(sampleDuration)
 		}
 	}
 }
@@ -211,6 +214,9 @@ func (o *InterviewOrchestrator) processLLMAndTTS(ctx context.Context, candidateT
 			if err != nil {
 				logger.Error("Error writing sample to AI track", zap.Error(err))
 			}
+
+			// Pacing the audio output
+			time.Sleep(sampleDuration)
 		}
 	}
 }

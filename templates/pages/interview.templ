@@ -58,7 +58,20 @@ templ InterviewRoom(sessionID string, token string, livekitURL string) {
 					<p class="text-lg font-medium text-slate-700 dark:text-slate-200" x-text="candidateInstruction"></p>
 				</div>
 
-				<div class="flex space-x-4 w-full px-6">
+				<!-- Start Button -->
+				<div class="flex justify-center w-full px-6" x-show="!interviewStarted">
+					<button 
+						@click="startInterview()"
+						class="w-full sm:w-auto px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center space-x-2"
+					>
+						<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+						</svg>
+						<span>Iniciar Entrevista</span>
+					</button>
+				</div>
+
+				<div class="flex space-x-4 w-full px-6" x-show="interviewStarted" x-cloak>
 					<!-- Botão de Microfone -->
 					<button 
 						@click="toggleMute()"
@@ -74,7 +87,7 @@ templ InterviewRoom(sessionID string, token string, livekitURL string) {
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
 						</svg>
 						
-						<svg x-show="isMuted" class="w-6 h-6 mr-2 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<svg x-show="isMuted" class="w-6 h-6 mr-2 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" x-cloak>
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
 						</svg>

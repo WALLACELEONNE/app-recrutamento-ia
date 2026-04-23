@@ -7,12 +7,13 @@ document.addEventListener('alpine:init', () => {
         let audioElement = null;
 
         return {
+            interviewStarted: false,
             isConnected: false,
             isMuted: true,
             isSpeaking: false,
             aiStatus: 'idle', // 'idle', 'listening', 'processing', 'speaking'
             aiStatusText: 'Aguardando início da sessão',
-            candidateInstruction: 'Permita o acesso ao microfone e clique em iniciar.',
+            candidateInstruction: 'Clique em "Iniciar Entrevista" e permita o acesso ao microfone.',
             timeRemaining: 15 * 60, // 15 minutos em segundos
             timerInterval: null,
 
@@ -29,8 +30,10 @@ document.addEventListener('alpine:init', () => {
                 audioElement = document.createElement('audio');
                 audioElement.autoplay = true;
                 document.body.appendChild(audioElement);
-                
-                // Attempt to connect immediately (In a real app, you'd fetch the token first)
+            },
+
+            async startInterview() {
+                this.interviewStarted = true;
                 await this.connectToLiveKit();
             },
 
@@ -47,9 +50,17 @@ document.addEventListener('alpine:init', () => {
                     // Listeners for Room Events
                     room.on(LivekitClient.RoomEvent.Connected, () => {
                         this.isConnected = true;
-                        this.candidateInstruction = 'Você está conectado. Desmute o microfone para falar com a IA.';
+                        this.candidateInstruction = 'Conectado. A IA iniciará a conversa em instantes...';
                         this.setAiStatus('idle', 'A Inteligência Artificial está aguardando você falar.');
                         this.startTimer();
+                        
+                        // Habilita o microfone automaticamente para disparar a introdução da IA
+                        room.localParticipant.setMicrophoneEnabled(true).then(() => {
+                            this.isMuted = false;
+                        }).catch(e => {
+                            console.error('Falha ao habilitar microfone automaticamente', e);
+                            this.candidateInstruction = 'Por favor, clique em "Microfone Mutado" para habilitar o áudio.';
+                        });
                     });
 
                     room.on(LivekitClient.RoomEvent.Disconnected, () => {

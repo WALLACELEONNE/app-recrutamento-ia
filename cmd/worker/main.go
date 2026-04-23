@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/joho/godotenv"
@@ -75,6 +76,9 @@ func main() {
 
 		orchestrator := services.NewInterviewOrchestrator(sttClient, llmClient, ttsClient)
 
+		var introPlayed bool
+		var introMutex sync.Mutex
+
 		room, err := lksdk.ConnectToRoom(hostURL, lksdk.ConnectInfo{
 			APIKey:              apiKey,
 			APISecret:           apiSecret,
@@ -85,6 +89,14 @@ func main() {
 				OnTrackSubscribed: func(track *webrtc.TrackRemote, pub *lksdk.RemoteTrackPublication, rp *lksdk.RemoteParticipant) {
 					zlog.Info("Track Subscribed", zap.String("track_id", track.ID()))
 					if track.Kind() == webrtc.RTPCodecTypeAudio {
+						introMutex.Lock()
+						if !introPlayed {
+							introPlayed = true
+							introMutex.Unlock()
+							go orchestrator.Introduce(context.Background(), "Desenvolvedor de Software")
+						} else {
+							introMutex.Unlock()
+						}
 						// IMPORTANTE: precisamos aguardar ou capturar o payload em background de maneira resiliente
 						go orchestrator.HandleCandidateAudio(context.Background(), track, rp)
 					}
@@ -110,10 +122,10 @@ func main() {
 			return err
 		}
 
-		// A IA se introduz para iniciar a entrevista
-		go orchestrator.Introduce(ctx, "Desenvolvedor de Software") // Pode vir do payload do job futuramente
+		// Removemos a chamada imediata do Introduce daqui.
+		// Ela será disparada quando o candidato se conectar e publicar a trilha de áudio.
 
-		log.Printf("Conectado à sala %s com sucesso!", room.Name())
+		log.Printf("Conectado à sala %s com sucesso! Aguardando candidato...", room.Name())
 		return nil
 	})
 
