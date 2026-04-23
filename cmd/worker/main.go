@@ -43,7 +43,7 @@ func main() {
 
 	ttsClient, err := elevenlabs.NewTTSClient(
 		getEnvOrDefault("ELEVENLABS_API_KEY", "dummy"),
-		getEnvOrDefault("ELEVENLABS_VOICE_ID", "dummy"),
+		getEnvOrDefault("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM"), // Default to Rachel if not provided
 	)
 	if err != nil {
 		zlog.Fatal("Failed to init TTS")

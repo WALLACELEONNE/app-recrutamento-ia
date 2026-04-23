@@ -1,6 +1,5 @@
-const CACHE_NAME = 'nova-voice-v4';
+const CACHE_NAME = 'nova-voice-v5';
 const ASSETS_TO_CACHE = [
-  '/',
   '/manifest.json',
   '/static/css/styles.css',
   '/static/js/app.js',
@@ -38,7 +37,7 @@ self.addEventListener('activate', (event) => {
   return self.clients.claim();
 });
 
-// Fetch Event: Stale-while-revalidate strategy for static assets, Network-first for API
+// Fetch Event: Network-first for HTML, Stale-while-revalidate for static assets
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
@@ -48,19 +47,23 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For static assets and HTML: Cache First, falling back to network
+  // Se for navegação (HTML), Network-First
+  if (event.request.mode === 'navigate' || event.request.headers.get('accept').includes('text/html')) {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match('/offline.html');
+      })
+    );
+    return;
+  }
+
+  // For static assets: Cache First, falling back to network
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
         return cachedResponse;
       }
-
-      return fetch(event.request).catch(() => {
-        // If network fails and requesting HTML, show offline page
-        if (event.request.headers.get('accept').includes('text/html')) {
-          return caches.match('/offline.html');
-        }
-      });
+      return fetch(event.request);
     })
   );
 });
